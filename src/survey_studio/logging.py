@@ -6,12 +6,14 @@ to every log record. This keeps logs machine-parsable and consistent.
 
 from __future__ import annotations
 
+from contextvars import ContextVar
 import logging
 import sys
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # TCH003: only import Mapping for typing
+    from collections.abc import Mapping
 import uuid
-from collections.abc import Mapping
-from contextvars import ContextVar
-from typing import Any
 
 _session_id_var: ContextVar[str] = ContextVar("session_id", default="-")
 

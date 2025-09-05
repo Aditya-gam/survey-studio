@@ -430,6 +430,27 @@ files = [
 toml = ["tomli ; python_full_version <= \"3.11.0a6\""]
 
 [[package]]
+name = "detect-secrets"
+version = "1.5.0"
+description = "Tool for detecting secrets in the codebase"
+optional = true
+python-versions = "*"
+groups = ["main"]
+markers = "extra == \"dev\""
+files = [
+    {file = "detect_secrets-1.5.0-py3-none-any.whl", hash = "sha256:e24e7b9b5a35048c313e983f76c4bd09dad89f045ff059e354f9943bf45aa060"},
+    {file = "detect_secrets-1.5.0.tar.gz", hash = "sha256:6bb46dcc553c10df51475641bb30fd69d25645cc12339e46c824c1e0c388898a"},
+]
+
+[package.dependencies]
+pyyaml = "*"
+requests = "*"
+
+[package.extras]
+gibberish = ["gibberish-detector"]
+word-list = ["pyahocorasick"]
+
+[[package]]
 name = "distlib"
 version = "0.4.0"
 description = "Distribution utilities"
@@ -2438,9 +2459,9 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more_it
 type = ["pytest-mypy"]
 
 [extras]
-dev = ["coverage", "mypy", "pre-commit", "pytest", "pytest-asyncio", "pytest-cov", "ruff"]
+dev = ["coverage", "detect-secrets", "mypy", "pre-commit", "pytest", "pytest-asyncio", "pytest-cov", "ruff"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11.9"
-content-hash = "056b281e38ce55aebf7bf6bc02bd8513d09ce1a259aabd9ac8ef4fd2b7ec0fa1"
+content-hash = "629d35b96dc383cddb5e240d50f0f34900537ecfa538a74ced453e291a74238c"

@@ -7,13 +7,15 @@ import os
 from .errors import ValidationError
 
 ALLOWED_MODELS: tuple[str, ...] = ("gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo")
+MAX_TOPIC_LENGTH: int = 200
+MAX_NUM_PAPERS: int = 25
 
 
 def validate_topic(topic: str) -> str:
     topic = topic.strip()
     if not topic:
         raise ValidationError("topic must be a non-empty string")
-    if len(topic) > 200:
+    if len(topic) > MAX_TOPIC_LENGTH:
         raise ValidationError("topic is too long; please shorten to <= 200 chars")
     return sanitize_text(topic)
 
@@ -21,7 +23,7 @@ def validate_topic(topic: str) -> str:
 def validate_num_papers(num_papers: int) -> int:
     if num_papers <= 0:
         raise ValidationError("num_papers must be a positive integer")
-    if num_papers > 25:
+    if num_papers > MAX_NUM_PAPERS:
         raise ValidationError("num_papers too large; please choose <= 25")
     return num_papers
 
@@ -44,8 +46,7 @@ def sanitize_text(text: str) -> str:
 
     # Collapse whitespace and remove dangerous control characters
     collapsed = " ".join(text.split())
-    safe = "".join(ch for ch in collapsed if ch.isprintable())
-    return safe
+    return "".join(ch for ch in collapsed if ch.isprintable())
 
 
 def clamp(value: int, min_value: int, max_value: int) -> int:

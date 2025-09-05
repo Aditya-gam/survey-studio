@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING
 
 from autogen_agentchat.messages import TextMessage
+
+if TYPE_CHECKING:  # TCH003: heavy typing imports behind TYPE_CHECKING
+    from collections.abc import AsyncGenerator
 
 from .agents import build_team
 from .errors import OrchestrationError

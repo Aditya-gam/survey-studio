@@ -6,7 +6,10 @@ include a minimal Markdown export now to support a download action.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # TCH003: restrict heavy typing imports to type-checking time
+    from collections.abc import Iterable
 from dataclasses import dataclass
 
 
