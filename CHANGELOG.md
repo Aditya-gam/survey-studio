@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - pytest with asyncio support for testing
 - Coverage reporting with HTML and XML outputs
 
-## [0.0.1] - 2024-01-XX
+## [0.1.0] - 2024-01-XX
 
 ### Added
 - Initial project bootstrap

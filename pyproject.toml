@@ -1,6 +1,6 @@
 [project]
 name = "survey-studio"
-version = "0.0.1"
+version = "0.1.0"
 description = "A multi-agent literature review assistant using AutoGen and Streamlit"
 authors = [
     {name = "Aditya Gambhir", email = "gambhir.aditya19@gmail.com"}
@@ -129,7 +129,7 @@ line-ending = "auto"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.0.1"
+version = "0.1.0"
 tag_format = "v$version"
 update_changelog_on_bump = true
 
