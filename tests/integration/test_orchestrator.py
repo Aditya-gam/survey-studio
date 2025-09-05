@@ -2,16 +2,32 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
+from autogen_agentchat.messages import TextMessage
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 from survey_studio.errors import OrchestrationError, ValidationError
 from survey_studio.orchestrator import run_survey_studio
 
+# Constants for magic numbers
+EXPECTED_MESSAGE_COUNT = 2
+MIN_LOG_CALLS = 2
+
 
 class TestRunSurveyStudio:
     """Integration tests for run_survey_studio function."""
+
+    async def _run_survey_studio_with_error(
+        self, topic: str, num_papers: int, model: str = "gpt-4o-mini"
+    ) -> None:
+        """Helper function to run survey studio and collect all results."""
+        async for _ in run_survey_studio(topic, num_papers, model):
+            pass
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_success(self, mock_team: Mock) -> None:
@@ -43,7 +59,7 @@ class TestRunSurveyStudio:
             async for result in run_survey_studio("Machine Learning", 5, "gpt-4o-mini"):
                 results.append(result)
 
-            assert len(results) == 2
+            assert len(results) == EXPECTED_MESSAGE_COUNT
             assert results[0] == "search_agent: Found relevant papers on the topic."
             assert (
                 results[1] == "summarizer: # Literature Review\n\nTest summary content."
@@ -78,7 +94,7 @@ class TestRunSurveyStudio:
             # Should not generate new session ID when provided
             mock_new_session.assert_not_called()
             mock_set_session.assert_called_once_with(test_session_id)
-            assert len(results) == 2
+            assert len(results) == EXPECTED_MESSAGE_COUNT
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_without_session_id(self, mock_team: Mock) -> None:
@@ -108,7 +124,7 @@ class TestRunSurveyStudio:
 
             # Should generate new session ID when not provided
             mock_set_session.assert_called_once_with("generated456")
-            assert len(results) == 2
+            assert len(results) == EXPECTED_MESSAGE_COUNT
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_validation_error_topic(self) -> None:
@@ -126,11 +142,14 @@ class TestRunSurveyStudio:
             mock_context_logger = Mock()
             mock_logger.return_value = mock_context_logger
 
+            async def _run_invalid_topic():
+                async for _ in run_survey_studio("", 5):
+                    pass
+
             with pytest.raises(
                 OrchestrationError, match="Failed to run literature review"
             ):
-                async for _ in run_survey_studio("", 5):
-                    pass
+                await _run_invalid_topic()
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_validation_error_num_papers(self) -> None:
@@ -151,11 +170,14 @@ class TestRunSurveyStudio:
             mock_context_logger = Mock()
             mock_logger.return_value = mock_context_logger
 
+            async def _run_invalid_papers():
+                async for _ in run_survey_studio("Valid Topic", 0):
+                    pass
+
             with pytest.raises(
                 OrchestrationError, match="Failed to run literature review"
             ):
-                async for _ in run_survey_studio("Valid Topic", 0):
-                    pass
+                await _run_invalid_papers()
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_validation_error_model(self) -> None:
@@ -177,11 +199,14 @@ class TestRunSurveyStudio:
             mock_context_logger = Mock()
             mock_logger.return_value = mock_context_logger
 
+            async def _run_invalid_model():
+                async for _ in run_survey_studio("Valid Topic", 5, "invalid-model"):
+                    pass
+
             with pytest.raises(
                 OrchestrationError, match="Failed to run literature review"
             ):
-                async for _ in run_survey_studio("Valid Topic", 5, "invalid-model"):
-                    pass
+                await _run_invalid_model()
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_validation_error_api_key(self) -> None:
@@ -206,11 +231,14 @@ class TestRunSurveyStudio:
             mock_context_logger = Mock()
             mock_logger.return_value = mock_context_logger
 
+            async def _run_invalid_api_key():
+                async for _ in run_survey_studio("Valid Topic", 5):
+                    pass
+
             with pytest.raises(
                 OrchestrationError, match="Failed to run literature review"
             ):
-                async for _ in run_survey_studio("Valid Topic", 5):
-                    pass
+                await _run_invalid_api_key()
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_team_building_error(self) -> None:
@@ -242,17 +270,17 @@ class TestRunSurveyStudio:
             with pytest.raises(
                 OrchestrationError, match="Failed to run literature review"
             ):
-                async for _ in run_survey_studio("Valid Topic", 5):
-                    pass
+                await self._run_survey_studio_with_error("Valid Topic", 5)
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_streaming_error(self, mock_team: Mock) -> None:
         """Test run_survey_studio handles streaming error."""
 
         # Create a mock team that raises an exception during streaming
-        async def failing_run_stream(*args, **kwargs):
+        async def failing_run_stream(
+            *_args: object, **_kwargs: object
+        ) -> AsyncGenerator[TextMessage, None]:
             raise Exception("Streaming failed")
-            yield  # pragma: no cover
 
         mock_team.run_stream = failing_run_stream
 
@@ -280,8 +308,7 @@ class TestRunSurveyStudio:
             with pytest.raises(
                 OrchestrationError, match="Failed to run literature review"
             ):
-                async for _ in run_survey_studio("Valid Topic", 5):
-                    pass
+                await self._run_survey_studio_with_error("Valid Topic", 5)
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_logging_integration(self, mock_team: Mock) -> None:
@@ -312,17 +339,18 @@ class TestRunSurveyStudio:
                 results.append(result)
 
             # Verify logging calls
-            assert mock_context_logger.info.call_count >= 2  # At least start and end
-            assert len(results) == 2
+            # At least start and end
+            assert mock_context_logger.info.call_count >= MIN_LOG_CALLS
+            assert len(results) == EXPECTED_MESSAGE_COUNT
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_message_format(self, mock_team: Mock) -> None:
         """Test run_survey_studio message formatting."""
 
         # Create custom mock team with different messages
-        async def custom_run_stream(*args, **kwargs):
-            from autogen_agentchat.messages import TextMessage
-
+        async def custom_run_stream(
+            *_args: object, **_kwargs: object
+        ) -> AsyncGenerator[TextMessage, None]:
             yield TextMessage(source="agent1", content="First message")
             yield TextMessage(
                 source="agent2", content="Second message with **markdown**"
@@ -351,7 +379,7 @@ class TestRunSurveyStudio:
             async for result in run_survey_studio("Test", 2):
                 results.append(result)
 
-            assert len(results) == 2
+            assert len(results) == EXPECTED_MESSAGE_COUNT
             assert results[0] == "agent1: First message"
             assert results[1] == "agent2: Second message with **markdown**"
 
@@ -389,14 +417,16 @@ class TestRunSurveyStudio:
             # Verify the task prompt was constructed correctly
             mock_build_team.assert_called_once()
             # Check that results were produced (indicating team was called)
-            assert len(results) == 2
+            assert len(results) == EXPECTED_MESSAGE_COUNT
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_empty_stream(self) -> None:
         """Test run_survey_studio handles empty message stream."""
         mock_team = Mock()
 
-        async def empty_run_stream(*args, **kwargs):
+        async def empty_run_stream(
+            *_args: object, **_kwargs: object
+        ) -> AsyncGenerator[TextMessage, None]:
             return
             yield  # pragma: no cover
 

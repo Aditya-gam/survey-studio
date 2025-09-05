@@ -12,6 +12,11 @@ import pytest
 from survey_studio.agents import build_team, make_llm_client
 from survey_studio.errors import AgentCreationError
 
+# Constants for magic numbers
+EXPECTED_AGENT_COUNT = 2
+EXPECTED_PARTICIPANT_COUNT = 2
+EXPECTED_MAX_TURNS = 2
+
 
 class TestMakeLlmClient:
     """Test make_llm_client function."""
@@ -23,7 +28,9 @@ class TestMakeLlmClient:
             return_value=mock_openai_client,
         ):
             result = make_llm_client(
-                "gpt-4o-mini", "test-key  # pragma: allowlist secret")  # pragma: allowlist secret
+                "gpt-4o-mini",
+                "test-key  # pragma: allowlist secret",  # pragma: allowlist secret
+            )
 
             assert result is mock_openai_client
 
@@ -36,7 +43,9 @@ class TestMakeLlmClient:
             mock_client_class.return_value = mock_client
 
             result = make_llm_client(
-                "gpt-4o", "test-key  # pragma: allowlist secret")  # pragma: allowlist secret
+                "gpt-4o",
+                "test-key  # pragma: allowlist secret",  # pragma: allowlist secret
+            )
 
             mock_client_class.assert_called_once_with(
                 model="gpt-4o", api_key="test-key  # pragma: allowlist secret"
@@ -54,8 +63,7 @@ class TestMakeLlmClient:
                 mock_client = Mock()
                 mock_client_class.return_value = mock_client
 
-                result = make_llm_client(
-                    model, "test-key  # pragma: allowlist secret")
+                result = make_llm_client(model, "test-key  # pragma: allowlist secret")
 
                 mock_client_class.assert_called_once_with(
                     model=model, api_key="test-key  # pragma: allowlist secret"
@@ -64,13 +72,14 @@ class TestMakeLlmClient:
 
     def test_make_llm_client_exception_handling(self) -> None:
         """Test exception handling in LLM client creation."""
-        with patch(
-            "survey_studio.agents.OpenAIChatCompletionClient",
-            side_effect=Exception("API Error"),
+        with (
+            patch(
+                "survey_studio.agents.OpenAIChatCompletionClient",
+                side_effect=Exception("API Error"),
+            ),
+            pytest.raises(AgentCreationError, match="Failed to create LLM client"),
         ):
-            with pytest.raises(AgentCreationError, match="Failed to create LLM client"):
-                make_llm_client(
-                    "gpt-4o-mini", "test-key  # pragma: allowlist secret")
+            make_llm_client("gpt-4o-mini", "test-key  # pragma: allowlist secret")
 
     def test_make_llm_client_preserves_original_exception(self) -> None:
         """Test that original exception is preserved in AgentCreationError."""
@@ -81,8 +90,7 @@ class TestMakeLlmClient:
             side_effect=original_error,
         ):
             with pytest.raises(AgentCreationError) as exc_info:
-                make_llm_client(
-                    "gpt-4o-mini", "test-key  # pragma: allowlist secret")
+                make_llm_client("gpt-4o-mini", "test-key  # pragma: allowlist secret")
 
             assert exc_info.value.__cause__ is original_error
 
@@ -96,8 +104,7 @@ class TestMakeLlmClient:
 
             result = make_llm_client("gpt-4o-mini", "")
 
-            mock_client_class.assert_called_once_with(
-                model="gpt-4o-mini", api_key="")
+            mock_client_class.assert_called_once_with(model="gpt-4o-mini", api_key="")
             assert result is mock_client
 
 
@@ -117,8 +124,7 @@ class TestBuildTeam:
             mock_team = Mock(spec=RoundRobinGroupChat)
             mock_team_class.return_value = mock_team
 
-            result = build_team(
-                "gpt-4o-mini", "test-key  # pragma: allowlist secret")
+            result = build_team("gpt-4o-mini", "test-key  # pragma: allowlist secret")
 
             assert result is mock_team
 
@@ -133,7 +139,8 @@ class TestBuildTeam:
             build_team("gpt-4o", "test-api-key")
 
             mock_make_client.assert_called_once_with(
-                model="gpt-4o", api_key="test-api-key"
+                model="gpt-4o",
+                api_key="test-api-key",  # pragma: allowlist secret
             )
 
     def test_build_team_creates_search_agent(self, mock_openai_client: Mock) -> None:
@@ -152,7 +159,7 @@ class TestBuildTeam:
             build_team("gpt-4o-mini", "test-key  # pragma: allowlist secret")
 
             # Check that AssistantAgent was called twice (search and summarizer)
-            assert mock_agent_class.call_count == 2
+            assert mock_agent_class.call_count == EXPECTED_AGENT_COUNT
 
             # Check first call (search agent)
             search_call = mock_agent_class.call_args_list[0]
@@ -166,7 +173,7 @@ class TestBuildTeam:
     def test_build_team_creates_summarizer_agent(
         self, mock_openai_client: Mock
     ) -> None:
-        """Test that build_team creates a summarizer agent with correct configuration."""
+        """Test that build_team creates a summarizer agent with correct config."""
         with (
             patch(
                 "survey_studio.agents.make_llm_client", return_value=mock_openai_client
@@ -206,7 +213,7 @@ class TestBuildTeam:
             build_team("gpt-4o-mini", "test-key  # pragma: allowlist secret")
 
             calls = mock_agent_class.call_args_list
-            assert len(calls) == 2
+            assert len(calls) == EXPECTED_AGENT_COUNT
 
             # Check search agent system message
             search_call = calls[0]
@@ -238,16 +245,15 @@ class TestBuildTeam:
             mock_team = Mock(spec=RoundRobinGroupChat)
             mock_team_class.return_value = mock_team
 
-            result = build_team(
-                "gpt-4o-mini", "test-key  # pragma: allowlist secret")
+            build_team("gpt-4o-mini", "test-key  # pragma: allowlist secret")
 
             mock_team_class.assert_called_once()
             call_args = mock_team_class.call_args
             participants = call_args[1]["participants"]
-            assert len(participants) == 2
+            assert len(participants) == EXPECTED_PARTICIPANT_COUNT
             assert participants[0] is mock_search_agent
             assert participants[1] is mock_summarizer
-            assert call_args[1]["max_turns"] == 2
+            assert call_args[1]["max_turns"] == EXPECTED_MAX_TURNS
 
     def test_build_team_logging(self, mock_openai_client: Mock) -> None:
         """Test that build_team logs team creation."""
@@ -268,7 +274,10 @@ class TestBuildTeam:
             mock_context_logger.info.assert_called_once()
             call_args = mock_context_logger.info.call_args
             assert "team built" in call_args[0][0]
-            assert call_args[1]["extra"]["extra_fields"]["participants"] == 2
+            assert (
+                call_args[1]["extra"]["extra_fields"]["participants"]
+                == EXPECTED_PARTICIPANT_COUNT
+            )
 
     def test_build_team_with_context_logging(self, mock_openai_client: Mock) -> None:
         """Test that build_team uses contextual logging."""
@@ -293,13 +302,14 @@ class TestBuildTeam:
 
     def test_build_team_error_in_client_creation(self) -> None:
         """Test build_team when LLM client creation fails."""
-        with patch(
-            "survey_studio.agents.make_llm_client",
-            side_effect=AgentCreationError("Client failed"),
+        with (
+            patch(
+                "survey_studio.agents.make_llm_client",
+                side_effect=AgentCreationError("Client failed"),
+            ),
+            pytest.raises(AgentCreationError, match="Client failed"),
         ):
-            with pytest.raises(AgentCreationError, match="Client failed"):
-                build_team("gpt-4o-mini",
-                           "test-key  # pragma: allowlist secret")
+            build_team("gpt-4o-mini", "test-key  # pragma: allowlist secret")
 
     def test_build_team_error_in_team_creation(self, mock_openai_client: Mock) -> None:
         """Test build_team when team creation fails."""
@@ -313,11 +323,11 @@ class TestBuildTeam:
                 "survey_studio.agents.RoundRobinGroupChat",
                 side_effect=Exception("Team creation failed"),
             ),
+            pytest.raises(Exception, match="Team creation failed"),
         ):
-            # Just verify that the exception would be raised (this test may need adjustment)
-            with pytest.raises(Exception):
-                build_team("gpt-4o-mini",
-                           "test-key  # pragma: allowlist secret")
+            # Just verify that the exception would be raised
+            # (this test may need adjustment)
+            build_team("gpt-4o-mini", "test-key  # pragma: allowlist secret")
 
     def test_build_team_with_different_models(self, mock_openai_client: Mock) -> None:
         """Test build_team with different model configurations."""
@@ -331,4 +341,5 @@ class TestBuildTeam:
             build_team("gpt-4o", "test-key  # pragma: allowlist secret")
 
             mock_make_client.assert_called_with(
-                model="gpt-4o", api_key="test-key  # pragma: allowlist secret")
+                model="gpt-4o", api_key="test-key  # pragma: allowlist secret"
+            )

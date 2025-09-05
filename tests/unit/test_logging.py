@@ -16,6 +16,10 @@ from survey_studio.logging import (
     with_context,
 )
 
+# Constants for magic numbers
+SESSION_ID_LENGTH = 8
+UNIQUE_ID_TEST_COUNT = 100
+
 
 class TestSessionIdManagement:
     """Test session ID management functions."""
@@ -24,15 +28,15 @@ class TestSessionIdManagement:
         """Test new_session_id returns 8-character hex string."""
         session_id = new_session_id()
         assert isinstance(session_id, str)
-        assert len(session_id) == 8
+        assert len(session_id) == SESSION_ID_LENGTH
         assert session_id.isalnum()
         # Should be valid hex
         int(session_id, 16)
 
     def test_new_session_id_uniqueness(self) -> None:
         """Test new_session_id generates unique IDs."""
-        ids = {new_session_id() for _ in range(100)}
-        assert len(ids) == 100  # All should be unique
+        ids = {new_session_id() for _ in range(UNIQUE_ID_TEST_COUNT)}
+        assert len(ids) == UNIQUE_ID_TEST_COUNT  # All should be unique
 
     def test_set_session_id(self) -> None:
         """Test set_session_id sets the session ID."""

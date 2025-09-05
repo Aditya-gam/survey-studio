@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
-from typing import Generator
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Generator
 
 from autogen_agentchat.messages import TextMessage
 from autogen_agentchat.teams import RoundRobinGroupChat
@@ -34,7 +35,7 @@ def mock_team() -> Mock:
     """Mock AutoGen team with async streaming support."""
     team = Mock(spec=RoundRobinGroupChat)
 
-    async def mock_run_stream(task: str) -> AsyncGenerator[TextMessage, None]:
+    async def mock_run_stream(_task: str) -> AsyncGenerator[TextMessage, None]:
         """Mock streaming that yields test messages."""
         messages = [
             TextMessage(

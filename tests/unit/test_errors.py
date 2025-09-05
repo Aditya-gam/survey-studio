@@ -177,55 +177,55 @@ class TestExceptionChaining:
         original_error = ValueError("Original error")
         chained_error = SurveyStudioError("Chained error")
 
-        try:
+        with pytest.raises(SurveyStudioError) as exc_info:
             raise chained_error from original_error
-        except SurveyStudioError as e:
-            assert e.__cause__ is original_error
-            assert isinstance(e.__cause__, ValueError)
+
+        assert exc_info.value.__cause__ is original_error
+        assert isinstance(exc_info.value.__cause__, ValueError)
 
     def test_arxiv_error_chaining(self) -> None:
         """Test ArxivSearchError chaining."""
         original_error = ConnectionError("Network error")
         chained_error = ArxivSearchError("Search failed")
 
-        try:
+        with pytest.raises(ArxivSearchError) as exc_info:
             raise chained_error from original_error
-        except ArxivSearchError as e:
-            assert e.__cause__ is original_error
-            assert isinstance(e.__cause__, ConnectionError)
+
+        assert exc_info.value.__cause__ is original_error
+        assert isinstance(exc_info.value.__cause__, ConnectionError)
 
     def test_agent_error_chaining(self) -> None:
         """Test AgentCreationError chaining."""
         original_error = ImportError("Missing dependency")
         chained_error = AgentCreationError("Agent creation failed")
 
-        try:
+        with pytest.raises(AgentCreationError) as exc_info:
             raise chained_error from original_error
-        except AgentCreationError as e:
-            assert e.__cause__ is original_error
-            assert isinstance(e.__cause__, ImportError)
+
+        assert exc_info.value.__cause__ is original_error
+        assert isinstance(exc_info.value.__cause__, ImportError)
 
     def test_validation_error_chaining(self) -> None:
         """Test ValidationError chaining."""
         original_error = TypeError("Wrong type")
         chained_error = ValidationError("Validation failed")
 
-        try:
+        with pytest.raises(ValidationError) as exc_info:
             raise chained_error from original_error
-        except ValidationError as e:
-            assert e.__cause__ is original_error
-            assert isinstance(e.__cause__, TypeError)
+
+        assert exc_info.value.__cause__ is original_error
+        assert isinstance(exc_info.value.__cause__, TypeError)
 
     def test_orchestration_error_chaining(self) -> None:
         """Test OrchestrationError chaining."""
         original_error = RuntimeError("Runtime failure")
         chained_error = OrchestrationError("Orchestration failed")
 
-        try:
+        with pytest.raises(OrchestrationError) as exc_info:
             raise chained_error from original_error
-        except OrchestrationError as e:
-            assert e.__cause__ is original_error
-            assert isinstance(e.__cause__, RuntimeError)
+
+        assert exc_info.value.__cause__ is original_error
+        assert isinstance(exc_info.value.__cause__, RuntimeError)
 
 
 class TestExceptionContext:
@@ -233,21 +233,25 @@ class TestExceptionContext:
 
     def test_exception_context_preservation(self) -> None:
         """Test exception context is preserved."""
-        try:
+
+        def _raise_nested_error() -> None:
             try:
                 raise ValueError("Inner error")
             except ValueError:
-                raise SurveyStudioError("Outer error")
-        except SurveyStudioError as e:
-            assert e.__context__ is not None
-            assert isinstance(e.__context__, ValueError)
+                raise SurveyStudioError("Outer error") from None
+
+        with pytest.raises(SurveyStudioError) as exc_info:
+            _raise_nested_error()
+
+        assert exc_info.value.__context__ is not None
+        assert isinstance(exc_info.value.__context__, ValueError)
 
     def test_traceback_preservation(self) -> None:
         """Test traceback is preserved."""
-        try:
+        with pytest.raises(ArxivSearchError) as exc_info:
             raise ArxivSearchError("Test error")
-        except ArxivSearchError as e:
-            assert e.__traceback__ is not None
+
+        assert exc_info.value.__traceback__ is not None
 
 
 class TestExceptionProperties:

@@ -6,6 +6,9 @@ import pytest
 
 from survey_studio.export import Paper, to_markdown
 
+# Constants for magic numbers
+LARGE_CONTENT_SIZE = 100
+
 
 class TestPaper:
     """Test Paper dataclass."""
@@ -84,7 +87,7 @@ class TestPaper:
 
         # Cannot use in set due to unhashable list
         with pytest.raises(TypeError, match="unhashable type"):
-            {paper}
+            _ = {paper}
 
     def test_paper_string_representation(self) -> None:
         """Test Paper string representation."""
@@ -144,7 +147,7 @@ class TestToMarkdown:
     def test_markdown_with_empty_frames(self) -> None:
         """Test markdown export with empty content frames."""
         topic = "Test Topic"
-        content_frames = []
+        content_frames: list[str] = []
 
         result = to_markdown(topic, content_frames)
 
@@ -210,14 +213,14 @@ class TestToMarkdown:
     def test_markdown_large_content(self) -> None:
         """Test markdown export with large content."""
         topic = "Large Topic"
-        content_frames = ["Frame " + str(i) for i in range(100)]
+        content_frames = ["Frame " + str(i) for i in range(LARGE_CONTENT_SIZE)]
 
         result = to_markdown(topic, content_frames)
 
         assert result.startswith("# Literature Review: Large Topic\n\n")
         assert "Frame 0" in result
-        assert "Frame 99" in result
-        assert result.count("Frame ") == 100
+        assert f"Frame {LARGE_CONTENT_SIZE - 1}" in result
+        assert result.count("Frame ") == LARGE_CONTENT_SIZE
 
     def test_markdown_content_order_preserved(self) -> None:
         """Test that content frame order is preserved."""

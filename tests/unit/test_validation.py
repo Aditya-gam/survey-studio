@@ -17,6 +17,15 @@ from survey_studio.validation import (
     validate_topic,
 )
 
+# Constants for magic numbers
+TEST_VALUE_5 = 5
+TEST_VALUE_10 = 10
+TEST_VALUE_50 = 50
+TEST_VALUE_100 = 100
+TEST_VALUE_200 = 200
+TEST_VALUE_25 = 25
+EXPECTED_MODEL_COUNT = 3
+
 
 class TestValidateTopic:
     """Test validate_topic function with various inputs."""
@@ -105,7 +114,7 @@ class TestValidateNumPapers:
 
     def test_non_integer_type_raises_error(self) -> None:
         """Test non-integer type raises TypeError."""
-        with pytest.raises(TypeError):  # type: ignore
+        with pytest.raises(TypeError):
             validate_num_papers("5")  # type: ignore
 
 
@@ -137,7 +146,7 @@ class TestValidateModel:
 class TestValidateOpenaiKey:
     """Test validate_openai_key function with various scenarios."""
 
-    def test_valid_key_from_env(self, mock_env_vars: None) -> None:
+    def test_valid_key_from_env(self, mock_env_vars: None) -> None:  # noqa: ARG002
         """Test valid key from environment."""
         result = validate_openai_key()
         assert result == "test-api-key-12345"
@@ -168,7 +177,7 @@ class TestValidateOpenaiKey:
         result = validate_openai_key("CUSTOM_API_KEY")
         assert result == "custom-key-123"
 
-    def test_custom_env_var_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_custom_env_var_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:  # noqa: ARG002
         """Test custom environment variable missing."""
         with pytest.raises(
             ValidationError, match="Missing API key: set CUSTOM_API_KEY"
@@ -224,8 +233,8 @@ class TestClamp:
 
     def test_value_within_bounds(self) -> None:
         """Test value within bounds returns unchanged."""
-        result = clamp(5, 0, 10)
-        assert result == 5
+        result = clamp(TEST_VALUE_5, 0, TEST_VALUE_10)
+        assert result == TEST_VALUE_5
 
     def test_value_below_min(self) -> None:
         """Test value below min returns min."""
@@ -234,8 +243,8 @@ class TestClamp:
 
     def test_value_above_max(self) -> None:
         """Test value above max returns max."""
-        result = clamp(15, 0, 10)
-        assert result == 10
+        result = clamp(15, 0, TEST_VALUE_10)
+        assert result == TEST_VALUE_10
 
     def test_value_at_min(self) -> None:
         """Test value at min boundary."""
@@ -244,23 +253,23 @@ class TestClamp:
 
     def test_value_at_max(self) -> None:
         """Test value at max boundary."""
-        result = clamp(10, 0, 10)
-        assert result == 10
+        result = clamp(TEST_VALUE_10, 0, TEST_VALUE_10)
+        assert result == TEST_VALUE_10
 
     def test_equal_min_max(self) -> None:
         """Test when min equals max."""
-        result = clamp(5, 5, 5)
-        assert result == 5
+        result = clamp(TEST_VALUE_5, TEST_VALUE_5, TEST_VALUE_5)
+        assert result == TEST_VALUE_5
 
     def test_negative_bounds(self) -> None:
         """Test with negative bounds."""
         result = clamp(-5, -10, -1)
-        assert result == -5
+        assert result == -5  # noqa: PLR2004
 
     def test_large_integer_values(self) -> None:
         """Test with large integer values."""
-        result = clamp(100, 0, 50)
-        assert result == 50
+        result = clamp(TEST_VALUE_100, 0, TEST_VALUE_50)
+        assert result == TEST_VALUE_50
 
 
 class TestConstants:
@@ -269,7 +278,7 @@ class TestConstants:
     def test_allowed_models_tuple(self) -> None:
         """Test ALLOWED_MODELS is a tuple with expected values."""
         assert isinstance(ALLOWED_MODELS, tuple)
-        assert len(ALLOWED_MODELS) == 3
+        assert len(ALLOWED_MODELS) == EXPECTED_MODEL_COUNT
         assert "gpt-4o-mini" in ALLOWED_MODELS
         assert "gpt-4o" in ALLOWED_MODELS
         assert "gpt-3.5-turbo" in ALLOWED_MODELS
@@ -277,9 +286,9 @@ class TestConstants:
     def test_max_topic_length(self) -> None:
         """Test MAX_TOPIC_LENGTH constant."""
         assert isinstance(MAX_TOPIC_LENGTH, int)
-        assert MAX_TOPIC_LENGTH == 200
+        assert MAX_TOPIC_LENGTH == TEST_VALUE_200
 
     def test_max_num_papers(self) -> None:
         """Test MAX_NUM_PAPERS constant."""
         assert isinstance(MAX_NUM_PAPERS, int)
-        assert MAX_NUM_PAPERS == 25
+        assert MAX_NUM_PAPERS == TEST_VALUE_25
