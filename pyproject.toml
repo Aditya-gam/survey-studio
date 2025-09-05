@@ -1,12 +1,12 @@
-[tool.poetry]
+[project]
 name = "survey-studio"
 version = "0.0.1"
 description = "A multi-agent literature review assistant using AutoGen and Streamlit"
-authors = ["Survey Studio Team <team@surveystudio.com>"]
+authors = [
+    {name = "Aditya Gambhir", email = "gambhir.aditya19@gmail.com"}
+]
 readme = "README.md"
-license = "MIT"
-homepage = "https://github.com/survey-studio/survey-studio"
-repository = "https://github.com/survey-studio/survey-studio"
+license = {text = "MIT"}
 keywords = ["literature-review", "autogen", "streamlit", "arxiv", "research"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -17,30 +17,40 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Text Processing :: General",
 ]
-packages = [{include = "survey_studio", from = "src"}]
+requires-python = ">=3.11.9"
+dependencies = [
+    "streamlit>=1.38.0",
+    "arxiv>=2.1.0",
+    "autogen-core>=0.4.1",
+    "autogen-agentchat>=0.4.1",
+    "autogen-ext>=0.4.1",
+    "openai>=1.53.0",
+    "tenacity>=8.5.0",
+    "tiktoken>=0.11.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11.9"
-streamlit = "^1.38.0"
-arxiv = "^2.1.0"
-autogen-core = "^0.4.1"
-autogen-agentchat = "^0.4.1"
-autogen-ext = "^0.4.1"
-openai = "^1.53.0"
-tenacity = "^8.5.0"
-tiktoken = "^0.11.0"
+[project.optional-dependencies]
+dev = [
+    "ruff==0.6.9",
+    "mypy==1.11.1",
+    "pytest==8.3.2",
+    "pytest-asyncio==0.23.8",
+    "pytest-cov==5.0.0",
+    "coverage==7.6.1",
+    "pre-commit==3.8.0",
+]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "0.6.9"
-mypy = "1.11.1"
-pytest = "8.3.2"
-pytest-asyncio = "0.23.8"
-pytest-cov = "5.0.0"
-coverage = "7.6.1"
-pre-commit = "3.8.0"
-
-[tool.poetry.scripts]
+[project.scripts]
 survey-studio = "survey_studio.app:main"
+
+[project.urls]
+Homepage = "https://github.com/survey-studio/survey-studio"
+Repository = "https://github.com/survey-studio/survey-studio"
+Documentation = "https://github.com/survey-studio/survey-studio/wiki"
+"Bug Reports" = "https://github.com/survey-studio/survey-studio/issues"
+
+[tool.poetry]
+packages = [{include = "survey_studio", from = "src"}]
 
 [build-system]
 requires = ["poetry-core"]
