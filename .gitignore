@@ -82,7 +82,8 @@ Thumbs.db
 .streamlit/secrets.toml
 
 # Poetry
-poetry.lock
+# Note: poetry.lock should be committed for reproducible builds
+# poetry.lock
 
 # Logs
 *.log
