@@ -6,7 +6,8 @@ A multi-agent literature review assistant powered by AutoGen and Streamlit. Surv
 ![Poetry](https://img.shields.io/badge/dependency--management-poetry-blue)
 ![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
 ![Type Checker: mypy](https://img.shields.io/badge/type--checker-mypy-blue)
-![Coverage](https://img.shields.io/badge/coverage-95%25-green)
+![CI](https://github.com/survey-studio/survey-studio/workflows/CI/badge.svg)
+![Coverage](https://codecov.io/gh/survey-studio/survey-studio/branch/main/graph/badge.svg)
 
 ## 🌟 Features
 
@@ -154,6 +155,28 @@ Per-file ignores are configured to reduce noise:
 - **Mypy missing imports**: add stubs or packages to the mypy hook `additional_dependencies` in `.pre-commit-config.yaml`.
 - **Hooks keep reformatting files**: run `poetry run ruff format .` then re-run `pre-commit`. Ensure your editor doesn’t trim/convert line endings unexpectedly.
 - **Pre-commit cache issues**: try `poetry run pre-commit clean` and `poetry run pre-commit gc`.
+
+### CI Validation Locally
+
+You can simulate the GitHub Actions workflow locally using `act`:
+
+```bash
+# Install act (macOS with brew)
+brew install act
+
+# Run the CI workflow locally (uses default container runners)
+act -j lint
+act -j type
+act -j test
+
+# Pass Codecov token for local runs if needed
+CODECOV_TOKEN=your_token act -j test
+```
+
+Common CI issues and resolutions:
+- Missing Poetry: ensure the workflow installs the pinned Poetry version.
+- Coverage below 95%: add or improve tests; check exclusions in `pyproject.toml`.
+- Mypy import errors: add stubs or dependencies under mypy hook `additional_dependencies`.
 - **Secrets false positives**: update the baseline after verifying the match is benign.
 
 ### Hook Order and Idempotency
@@ -215,15 +238,27 @@ asyncio.run(example())
 The project uses pytest with comprehensive test coverage:
 
 ```bash
-# Run all tests
+# Run all tests with configured coverage and 95% threshold
 poetry run pytest
 
-# Run with coverage report
-poetry run pytest --cov=src/survey_studio --cov-report=html
+# Generate coverage HTML locally (outputs to htmlcov/)
+poetry run pytest --cov-report=html
 
 # Run specific test file
-poetry run pytest tests/test_backend.py
+poetry run pytest tests/unit/test_tools.py
 ```
+
+### Coverage Reporting
+
+- The project enforces a 95% coverage threshold via `pyproject.toml` (`--cov-fail-under=95`).
+- CI uploads coverage to Codecov. View the report on your repo’s Codecov page.
+- Local artifacts: `htmlcov/index.html` for an interactive report, `coverage.xml` for CI tools.
+
+### CI/CD
+
+- GitHub Actions runs three jobs on push/PR: Lint (Ruff), Type (mypy), Test (pytest+coverage).
+- Coverage is uploaded to Codecov, and the CI enforces the 95% threshold.
+- Badges: CI and Coverage appear at the top of this README.
 
 ## 📋 Configuration
 
@@ -234,6 +269,13 @@ poetry run pytest tests/test_backend.py
 ### Streamlit Configuration
 
 The `.streamlit/config.toml` file contains UI theme and server settings.
+
+### CI/Codecov Setup
+
+1. Add GitHub secret `CODECOV_TOKEN` with your repository token from Codecov.
+2. Install the Codecov GitHub App on the repository and enable status checks.
+3. Ensure required status checks include: `Lint (Ruff)`, `Type Check (mypy)`, `Test (pytest + coverage)`, and `codecov/project`, `codecov/patch`.
+4. Branch protection: require pull request reviews, dismiss stale approvals on new commits, and enforce linear history (rebase merges).
 
 ## 🤝 Contributing
 

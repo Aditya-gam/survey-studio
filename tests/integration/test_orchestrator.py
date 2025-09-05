@@ -142,7 +142,7 @@ class TestRunSurveyStudio:
             mock_context_logger = Mock()
             mock_logger.return_value = mock_context_logger
 
-            async def _run_invalid_topic():
+            async def _run_invalid_topic() -> None:
                 async for _ in run_survey_studio("", 5):
                     pass
 
@@ -170,7 +170,7 @@ class TestRunSurveyStudio:
             mock_context_logger = Mock()
             mock_logger.return_value = mock_context_logger
 
-            async def _run_invalid_papers():
+            async def _run_invalid_papers() -> None:
                 async for _ in run_survey_studio("Valid Topic", 0):
                     pass
 
@@ -199,7 +199,7 @@ class TestRunSurveyStudio:
             mock_context_logger = Mock()
             mock_logger.return_value = mock_context_logger
 
-            async def _run_invalid_model():
+            async def _run_invalid_model() -> None:
                 async for _ in run_survey_studio("Valid Topic", 5, "invalid-model"):
                     pass
 
@@ -231,7 +231,7 @@ class TestRunSurveyStudio:
             mock_context_logger = Mock()
             mock_logger.return_value = mock_context_logger
 
-            async def _run_invalid_api_key():
+            async def _run_invalid_api_key() -> None:
                 async for _ in run_survey_studio("Valid Topic", 5):
                     pass
 

@@ -1,0 +1,30 @@
+codecov:
+  require_ci_to_pass: true
+  notify:
+    after_n_builds: 1
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  status:
+    project:
+      default:
+        target: 95%
+        threshold: 0.5%
+        base: auto
+    patch:
+      default:
+        target: 95%
+        threshold: 0.5%
+        base: pr
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false
+
+ignore:
+  - "src/survey_studio/app.py"
+  - "src/survey_studio/backend.py"
+  - "src/survey_studio/ui/components.py"
