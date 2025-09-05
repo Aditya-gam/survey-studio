@@ -735,7 +735,11 @@ class TestExportErrorHandling:
     def test_export_error_message(self) -> None:
         """Test export error message."""
         with pytest.raises(ExportError, match="Test error") as exc_info:
-            raise ExportError("Test error")
+            raise ExportError(
+                "Test error",
+                format_type="md",
+                context={"topic": "Test", "format": "md"},
+            )
         assert exc_info.value.message == "Test error"
         assert exc_info.value.user_message == (
             "Export failed. Please try again or contact support if the "
