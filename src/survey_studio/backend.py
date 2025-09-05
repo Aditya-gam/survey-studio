@@ -15,22 +15,21 @@ Streamlit, FastAPI, Gradio, etc.
 from __future__ import annotations
 
 import os
-from typing import AsyncGenerator, Dict, List
+from collections.abc import AsyncGenerator
 
 import arxiv
-from autogen_core.tools import FunctionTool
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.messages import TextMessage
 from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_core.tools import FunctionTool
 from autogen_ext.models.openai import OpenAIChatCompletionClient
-
 
 # ---------------------------------------------------------------------------
 # 1. Tool definition ---------------------------------------------------------
 # ---------------------------------------------------------------------------
 
 
-def arxiv_search(query: str, max_results: int = 5) -> List[Dict]:
+def arxiv_search(query: str, max_results: int = 5) -> list[dict]:
     """Return a compact list of arXiv papers matching *query*.
 
     Each element contains: ``title``, ``authors``, ``published``, ``summary`` and
@@ -43,7 +42,7 @@ def arxiv_search(query: str, max_results: int = 5) -> List[Dict]:
         max_results=max_results,
         sort_by=arxiv.SortCriterion.Relevance,
     )
-    papers: List[Dict] = []
+    papers: list[dict] = []
     for result in client.results(search):
         papers.append(
             {
