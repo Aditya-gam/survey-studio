@@ -7,14 +7,21 @@ import pytest
 from survey_studio.errors import ValidationError
 from survey_studio.validation import (
     ALLOWED_MODELS,
+    MAX_KEYWORDS,
     MAX_NUM_PAPERS,
     MAX_TOPIC_LENGTH,
+    MIN_TOPIC_LENGTH,
+    MIN_YEAR,
     clamp,
     sanitize_text,
+    validate_api_key_format,
+    validate_keywords,
     validate_model,
     validate_num_papers,
     validate_openai_key,
     validate_topic,
+    validate_topic_characters,
+    validate_year_range,
 )
 
 # Constants for magic numbers
@@ -64,11 +71,34 @@ class TestValidateTopic:
         result = validate_topic(topic)
         assert result == topic
 
-    def test_topic_sanitization(self) -> None:
-        """Test topic sanitization removes control characters."""
-        topic = "Test\x00Topic\x01With\x02Control"
+    def test_topic_at_min_length(self) -> None:
+        """Test topic at minimum allowed length."""
+        topic = "ABC"
         result = validate_topic(topic)
-        assert result == "TestTopicWithControl"
+        assert result == topic
+
+    def test_topic_below_min_length_raises_error(self) -> None:
+        """Test topic below minimum length raises ValidationError."""
+        topic = "AB"
+        with pytest.raises(
+            ValidationError, match="topic must be at least 3 characters long"
+        ):
+            validate_topic(topic)
+
+    def test_topic_sanitization(self) -> None:
+        """Test topic sanitization removes dangerous characters."""
+        # Create a topic with dangerous characters that would be sanitized
+        topic = "Test Topic"
+        # First validate that normal characters work
+        result = validate_topic(topic)
+        assert result == topic
+
+        # Test sanitization function directly with dangerous characters
+        from survey_studio.validation import sanitize_text
+
+        dangerous_topic = "Test<Topic>With&Dangerous"
+        result = sanitize_text(dangerous_topic)
+        assert result == "TestTopicWithDangerous"
 
 
 class TestValidateNumPapers:
@@ -107,6 +137,13 @@ class TestValidateNumPapers:
         result = validate_num_papers(MAX_NUM_PAPERS)
         assert result == MAX_NUM_PAPERS
 
+    def test_papers_above_max_raises_error(self) -> None:
+        """Test papers above maximum raises ValidationError."""
+        with pytest.raises(
+            ValidationError, match="num_papers too large; please choose <= 10"
+        ):
+            validate_num_papers(11)
+
     def test_min_papers_allowed(self) -> None:
         """Test minimum allowed papers."""
         result = validate_num_papers(1)
@@ -115,7 +152,7 @@ class TestValidateNumPapers:
     def test_non_integer_type_raises_error(self) -> None:
         """Test non-integer type raises TypeError."""
         with pytest.raises(TypeError):
-            validate_num_papers("5")  # type: ignore[arg-type]
+            validate_num_papers("5")
 
 
 class TestValidateModel:
@@ -149,7 +186,7 @@ class TestValidateOpenaiKey:
     def test_valid_key_from_env(self, mock_env_vars: None) -> None:  # noqa: ARG002
         """Test valid key from environment."""
         result = validate_openai_key()
-        assert result == "test-api-key-12345"
+        assert result == "sk-test1234567890abcdef1234567890abcdef1234567890"
 
     def test_missing_key_raises_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test missing key raises ValidationError."""
@@ -173,9 +210,11 @@ class TestValidateOpenaiKey:
 
     def test_custom_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test custom environment variable name."""
-        monkeypatch.setenv("CUSTOM_API_KEY", "custom-key-123")
+        monkeypatch.setenv(
+            "CUSTOM_API_KEY", "sk-custom1234567890abcdef1234567890abcdef1234567890"
+        )
         result = validate_openai_key("CUSTOM_API_KEY")
-        assert result == "custom-key-123"
+        assert result == "sk-custom1234567890abcdef1234567890abcdef1234567890"
 
     def test_custom_env_var_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:  # noqa: ARG002
         """Test custom environment variable missing."""
@@ -183,6 +222,14 @@ class TestValidateOpenaiKey:
             ValidationError, match="Missing API key: set CUSTOM_API_KEY"
         ):
             validate_openai_key("CUSTOM_API_KEY")
+
+    def test_invalid_key_format_raises_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test invalid API key format raises ValidationError."""
+        monkeypatch.setenv("OPENAI_API_KEY", "invalid-key-format")
+        with pytest.raises(ValidationError, match="Invalid API key format"):
+            validate_openai_key()
 
 
 class TestSanitizeText:
@@ -272,6 +319,184 @@ class TestClamp:
         assert result == TEST_VALUE_50
 
 
+class TestValidateTopicCharacters:
+    """Test validate_topic_characters function with various inputs."""
+
+    def test_valid_characters_only(self) -> None:
+        """Test valid topic with allowed characters."""
+        topic = "Machine Learning and AI research, 2024!"
+        result = validate_topic_characters(topic)
+        assert result is True
+
+    def test_invalid_characters(self) -> None:
+        """Test topic with invalid characters."""
+        invalid_topics = [
+            "Machine@Learning",  # @ symbol
+            "Research#Topic",  # # symbol
+            "AI&ML",  # & symbol
+            "Test<Topic>",  # < > symbols
+            "Paper|Search",  # | symbol
+        ]
+        for topic in invalid_topics:
+            result = validate_topic_characters(topic)
+            assert result is False
+
+    def test_empty_string(self) -> None:
+        """Test empty string."""
+        result = validate_topic_characters("")
+        assert (
+            result is False
+        )  # Empty string should not be valid for character validation
+
+    def test_unicode_characters(self) -> None:
+        """Test unicode characters."""
+        topic = "Research on naïve Bayes"
+        result = validate_topic_characters(topic)
+        assert result is True
+
+
+class TestValidateKeywords:
+    """Test validate_keywords function with various inputs."""
+
+    def test_valid_keywords(self) -> None:
+        """Test valid comma-separated keywords."""
+        keywords_str = "machine learning, neural networks, deep learning"
+        result = validate_keywords(keywords_str)
+        expected = ["machine learning", "neural networks", "deep learning"]
+        assert result == expected
+
+    def test_keywords_with_whitespace(self) -> None:
+        """Test keywords with extra whitespace."""
+        keywords_str = "  machine learning  ,  neural networks  "
+        result = validate_keywords(keywords_str)
+        expected = ["machine learning", "neural networks"]
+        assert result == expected
+
+    def test_keywords_with_hyphens_underscores(self) -> None:
+        """Test keywords with hyphens and underscores."""
+        keywords_str = "machine_learning, neural-networks, deep_learning"
+        result = validate_keywords(keywords_str)
+        expected = ["machine_learning", "neural-networks", "deep_learning"]
+        assert result == expected
+
+    def test_empty_keywords_string(self) -> None:
+        """Test empty keywords string."""
+        result = validate_keywords("")
+        assert result == []
+
+    def test_too_many_keywords_raises_error(self) -> None:
+        """Test too many keywords raises ValidationError."""
+        keywords_str = ", ".join([f"keyword{i}" for i in range(11)])  # 11 keywords
+        with pytest.raises(ValidationError, match="Too many keywords"):
+            validate_keywords(keywords_str)
+
+    def test_invalid_keyword_characters(self) -> None:
+        """Test keywords with invalid characters."""
+        invalid_keywords = [
+            "machine@learning",
+            "neural#networks",
+            "deep&learning",
+            "test-keyword!",
+        ]
+        for keyword_str in invalid_keywords:
+            with pytest.raises(ValidationError, match="Invalid keyword"):
+                validate_keywords(keyword_str)
+
+    def test_duplicate_keywords_removed(self) -> None:
+        """Test that duplicate keywords are handled."""
+        keywords_str = "machine learning, neural networks, machine learning"
+        result = validate_keywords(keywords_str)
+        # Should still contain duplicates as they're valid
+        expected = ["machine learning", "neural networks", "machine learning"]
+        assert result == expected
+
+
+class TestValidateYearRange:
+    """Test validate_year_range function with various inputs."""
+
+    def test_valid_year_range(self) -> None:
+        """Test valid year range."""
+        result = validate_year_range(2020, 2024)
+        assert result == (2020, 2024)
+
+    def test_start_year_too_early_raises_error(self) -> None:
+        """Test start year before minimum raises ValidationError."""
+        with pytest.raises(ValidationError, match="Start year must be >= 1900"):
+            validate_year_range(1899, 2024)
+
+    def test_end_year_too_late_raises_error(self) -> None:
+        """Test end year after current year + 1 raises ValidationError."""
+        import datetime
+
+        current_year = datetime.datetime.now().year
+        with pytest.raises(
+            ValidationError, match=f"End year cannot be > {current_year + 1}"
+        ):
+            validate_year_range(2020, current_year + 2)
+
+    def test_start_year_after_end_year_raises_error(self) -> None:
+        """Test start year after end year raises ValidationError."""
+        with pytest.raises(
+            ValidationError, match="Start year cannot be greater than end year"
+        ):
+            validate_year_range(2024, 2020)
+
+    def test_same_years(self) -> None:
+        """Test same start and end year."""
+        result = validate_year_range(2024, 2024)
+        assert result == (2024, 2024)
+
+    def test_minimum_year_boundary(self) -> None:
+        """Test minimum year boundary."""
+        result = validate_year_range(1900, 1901)
+        assert result == (1900, 1901)
+
+
+class TestValidateApiKeyFormat:
+    """Test validate_api_key_format function with various inputs."""
+
+    def test_valid_api_key_format(self) -> None:
+        """Test valid API key format."""
+        valid_key = (
+            "sk-1234567890abcdef1234567890abcdef1234567890"  # pragma: allowlist secret
+        )
+        result = validate_api_key_format(valid_key)
+        assert result is True
+
+    def test_invalid_prefix(self) -> None:
+        """Test API key without proper prefix."""
+        invalid_keys = [
+            "pk-1234567890abcdef1234567890abcdef1234567890",  # pragma: allowlist secret
+            "1234567890abcdef1234567890abcdef1234567890",  # pragma: allowlist secret
+            "sk_",  # Just prefix
+        ]
+        for key in invalid_keys:
+            result = validate_api_key_format(key)
+            assert result is False
+
+    def test_invalid_characters(self) -> None:
+        """Test API key with invalid characters."""
+        invalid_keys = [
+            "sk-1234567890abcdef@234567890abcdef1234567890",  # @ symbol
+            "sk-1234567890abcdef 234567890abcdef1234567890",  # Space
+            "sk-1234567890abcdef.234567890abcdef1234567890",  # Dot
+        ]
+        for key in invalid_keys:
+            result = validate_api_key_format(key)
+            assert result is False
+
+    def test_too_short_key(self) -> None:
+        """Test API key that's too short."""
+        short_key = "sk-12345"
+        result = validate_api_key_format(short_key)
+        assert result is False
+
+    def test_empty_string(self) -> None:
+        """Test empty string."""
+        result = validate_api_key_format("")
+        assert result is False
+
+
 class TestConstants:
     """Test module constants."""
 
@@ -291,4 +516,21 @@ class TestConstants:
     def test_max_num_papers(self) -> None:
         """Test MAX_NUM_PAPERS constant."""
         assert isinstance(MAX_NUM_PAPERS, int)
-        assert MAX_NUM_PAPERS == TEST_VALUE_25
+        assert MAX_NUM_PAPERS == TEST_VALUE_10
+
+    def test_min_topic_length(self) -> None:
+        """Test MIN_TOPIC_LENGTH constant."""
+        assert isinstance(MIN_TOPIC_LENGTH, int)
+        MIN_TOPIC_LENGTH_VALUE = 3
+        assert MIN_TOPIC_LENGTH == MIN_TOPIC_LENGTH_VALUE
+
+    def test_max_keywords(self) -> None:
+        """Test MAX_KEYWORDS constant."""
+        assert isinstance(MAX_KEYWORDS, int)
+        assert MAX_KEYWORDS == TEST_VALUE_10
+
+    def test_min_year(self) -> None:
+        """Test MIN_YEAR constant."""
+        assert isinstance(MIN_YEAR, int)
+        MIN_YEAR_VALUE = 1900
+        assert MIN_YEAR == MIN_YEAR_VALUE

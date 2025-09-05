@@ -86,7 +86,9 @@ def mock_env_vars() -> Generator[None, None, None]:  # noqa: PT004
     original_env = dict(os.environ)
 
     # Set test environment variables
-    os.environ["OPENAI_API_KEY"] = "test-api-key-12345"  # pragma: allowlist secret
+    os.environ["OPENAI_API_KEY"] = (
+        "sk-test1234567890abcdef1234567890abcdef1234567890"  # pragma: allowlist secret
+    )
 
     yield
 
@@ -140,7 +142,7 @@ def invalid_num_papers_negative() -> int:
 @pytest.fixture
 def invalid_num_papers_too_large() -> int:
     """Invalid papers exceeding max."""
-    return 26  # MAX_NUM_PAPERS + 1
+    return 11  # MAX_NUM_PAPERS + 1
 
 
 @pytest.fixture

@@ -25,6 +25,13 @@ from .ui.toasts import (
     show_success_toast,
     show_warning_toast,
 )
+from .ui.validation_components import (
+    render_advanced_options_sidebar,
+    render_validation_helper,
+    render_validation_status,
+    validate_papers_input,
+    validate_topic_input,
+)
 
 
 def configure_page() -> None:
@@ -48,26 +55,37 @@ def configure_page() -> None:
     )
 
 
-def render_sidebar() -> tuple[str, int, str]:
-    """Render the sidebar with configuration options."""
+def render_sidebar() -> tuple[str, int, str, dict]:
+    """Render the sidebar with configuration options and validation."""
     st.sidebar.title("📚 Survey Studio")
     st.sidebar.markdown("Configure your literature review")
 
-    # Topic input
+    # Topic input with inline validation
     query = st.sidebar.text_input(
         "Research topic",
         placeholder="e.g., transformer architectures, quantum computing",
-        help="Enter the research topic you want to review",
+        help="Enter the research topic you want to review (3-200 characters)",
+        key="topic_input",
     )
 
-    # Number of papers slider
+    # Show topic validation feedback
+    if query:
+        helper_text, state = validate_topic_input(query)
+        render_validation_helper(helper_text, state)
+
+    # Number of papers slider with validation
     n_papers = st.sidebar.slider(
         "Number of papers",
         min_value=1,
         max_value=10,
         value=5,
-        help="Select how many papers to include in the review",
+        help="Select how many papers to include in the review (1-10)",
+        key="papers_slider",
     )
+
+    # Show papers validation feedback
+    helper_text, state = validate_papers_input(n_papers)
+    render_validation_helper(helper_text, state)
 
     # Model selection
     model = st.sidebar.selectbox(
@@ -75,9 +93,13 @@ def render_sidebar() -> tuple[str, int, str]:
         options=["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"],
         index=0,
         help="Choose the AI model for the agents",
+        key="model_select",
     )
 
-    return query, n_papers, model
+    # Advanced options
+    advanced_options = render_advanced_options_sidebar()
+
+    return query, n_papers, model, advanced_options
 
 
 def render_main_content(query: str, n_papers: int, model: str) -> None:
@@ -149,11 +171,20 @@ def main() -> None:
     show_error_panel()
 
     # Render sidebar and get configuration
-    query, n_papers, model = render_sidebar()
+    query, n_papers, model, advanced_options = render_sidebar()
     render_main_content(query, n_papers, model)
 
+    # Validation status and button state management
+    all_valid = render_validation_status(query, n_papers, advanced_options)
+    button_disabled = not all_valid
+
     # Handle search button and execution
-    if st.sidebar.button("🚀 Start Review", type="primary", disabled=not query):
+    if st.sidebar.button(
+        "🚀 Start Review",
+        type="primary",
+        disabled=button_disabled,
+        help="Start the literature review (requires valid inputs and API key)",
+    ):
         _handle_review_execution(query, n_papers, model)
 
 
