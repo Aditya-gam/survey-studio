@@ -5,16 +5,25 @@ Enhanced with comprehensive error handling, retry mechanisms, and notifications.
 """
 
 import asyncio
+from datetime import datetime
 import logging
 
 import streamlit as st
 
 from .errors import (
     ConfigurationError,
+    ExportError,
     ExternalServiceError,
     LLMError,
     SurveyStudioError,
     ValidationError,
+)
+from .export import (
+    ExportMetadata,
+    generate_filename,
+    get_export_formats,
+    to_html,
+    to_markdown,
 )
 from .logging import configure_logging, new_session_id, set_session_id
 from .orchestrator import run_survey_studio
@@ -137,12 +146,22 @@ async def run_review_stream(query: str, n_papers: int, model: str) -> None:
     """Run the literature review and stream results."""
     chat_container = st.container()
 
+    # Initialize results storage
+    if "results_frames" not in st.session_state:
+        st.session_state.results_frames = []
+
+    # Clear previous results for new review
+    st.session_state.results_frames = []
+
     with chat_container:
         st.subheader("🤖 Agent Conversation")
 
         async for frame in run_survey_studio(query, num_papers=n_papers, model=model):
             role, *rest = frame.split(":", 1)
             content = rest[0].strip() if rest else ""
+
+            # Store frame for export functionality
+            st.session_state.results_frames.append(frame)
 
             # Display agent messages with different styling
             if role == "search_agent":
@@ -290,31 +309,168 @@ def _run_review_with_fallback(query: str, n_papers: int, model: str) -> None:
 
 
 def _handle_download(query: str, n_papers: int, model: str) -> None:
-    """Handle download functionality."""
-    if st.sidebar.button(
-        "📥 Download Results", help="Download the literature review results"
-    ):
-        try:
-            # Placeholder for future enhancement
-            download_data = (
-                f"# Literature Review: {query}\n\n"
-                f"Generated on: {st.session_state.get('session_id', 'unknown')}\n"
-                f"Model: {model}\nPapers: {n_papers}\n\n[Results would be here...]"
+    """Handle enhanced export functionality with dual format support."""
+    # Get stored results from session state
+    results_frames = st.session_state.get("results_frames", [])
+
+    if not results_frames:
+        st.sidebar.info("📝 Complete a literature review first to enable downloads")
+        return
+
+    # Create export metadata
+    metadata = ExportMetadata(
+        topic=query,
+        generation_date=datetime.now().isoformat(),
+        model_used=model,
+        session_id=st.session_state.get("session_id", "unknown"),
+        paper_count=n_papers,
+    )
+
+    # Add help section for PDF export
+    with st.sidebar.expander("📄 Export Help", expanded=False):
+        st.markdown("""
+        **Available Formats:**
+        - **Markdown**: Source format with YAML metadata
+        - **HTML**: Web-ready format with styling
+
+        **For PDF Export:**
+        1. Download HTML format
+        2. Open in your browser
+        3. Use browser's "Print" → "Save as PDF"
+        4. Optimized for print with clean formatting
+        """)
+
+    # Export format selection
+    st.sidebar.markdown("### 📥 Download Options")
+
+    col1, col2 = st.sidebar.columns(2)
+
+    # Markdown export
+    with col1:
+        if st.button(
+            "📄 Markdown",
+            help="Download as Markdown with YAML metadata",
+            use_container_width=True,
+        ):
+            _export_format(query, results_frames, metadata, "markdown")
+
+    # HTML export
+    with col2:
+        if st.button(
+            "🌐 HTML", help="Download as HTML with styling", use_container_width=True
+        ):
+            _export_format(query, results_frames, metadata, "html")
+
+    # Copy to clipboard options
+    st.sidebar.markdown("### 📋 Copy Options")
+
+    col3, col4 = st.sidebar.columns(2)
+
+    with col3:
+        if st.button(
+            "📋 Copy MD", help="Copy Markdown to clipboard", use_container_width=True
+        ):
+            _copy_to_clipboard(query, results_frames, metadata, "markdown")
+
+    with col4:
+        if st.button(
+            "📋 Copy HTML", help="Copy HTML to clipboard", use_container_width=True
+        ):
+            _copy_to_clipboard(query, results_frames, metadata, "html")
+
+
+def _export_format(
+    query: str, results_frames: list[str], metadata: ExportMetadata, format_type: str
+) -> None:
+    """Export content in specified format with error handling."""
+    try:
+        with st.spinner(f"Generating {format_type.upper()} export..."):
+            progress_bar = st.progress(0)
+
+            # Generate filename
+            progress_bar.progress(20)
+            filename = generate_filename(
+                query, get_export_formats()[format_type]["extension"]
             )
 
-            st.sidebar.download_button(
-                label="📥 Download Markdown",
-                data=download_data,
-                file_name=f"literature_review_{query.replace(' ', '_')}.md",
-                mime="text/markdown",
+            # Generate content based on format
+            progress_bar.progress(50)
+            if format_type == "markdown":
+                content = to_markdown(query, results_frames, metadata)
+            elif format_type == "html":
+                content = to_html(query, results_frames, metadata)
+            else:
+                raise ExportError(
+                    f"Unsupported format: {format_type}", format_type=format_type
+                )
+
+            progress_bar.progress(80)
+
+            # Create download button
+            mime_type = get_export_formats()[format_type]["mime_type"]
+
+            st.download_button(
+                label=f"💾 Save {filename}",
+                data=content,
+                file_name=filename,
+                mime=mime_type,
+                help=f"Click to download as {format_type.upper()}",
+                use_container_width=True,
             )
+
+            progress_bar.progress(100)
+            progress_bar.empty()
 
             show_success_toast(
-                "Download prepared", "Click the download button to save your results"
+                f"{format_type.upper()} export ready",
+                f"Click 'Save {filename}' to download your literature review",
             )
 
-        except Exception as exc:
-            handle_exception_with_toast(exc, "download preparation")
+    except (ValidationError, ExportError) as e:
+        handle_exception_with_toast(e, f"{format_type} export")
+
+    except Exception as exc:
+        handle_exception_with_toast(exc, f"{format_type} export preparation")
+
+
+def _copy_to_clipboard(
+    query: str, results_frames: list[str], metadata: ExportMetadata, format_type: str
+) -> None:
+    """Copy content to clipboard as fallback option."""
+    try:
+        with st.spinner(f"Preparing {format_type.upper()} for clipboard..."):
+            # Generate content based on format
+            if format_type == "markdown":
+                content = to_markdown(query, results_frames, metadata)
+            elif format_type == "html":
+                content = to_html(query, results_frames, metadata)
+            else:
+                raise ExportError(
+                    f"Unsupported format: {format_type}", format_type=format_type
+                )
+
+            # Display content in expandable text area for manual copying
+            with st.expander(
+                f"📋 {format_type.upper()} Content (Click to copy)", expanded=True
+            ):
+                st.text_area(
+                    f"{format_type.upper()} Content",
+                    value=content,
+                    height=200,
+                    help="Select all content and copy to clipboard",
+                    key=f"copy_{format_type}_{metadata.session_id}",
+                )
+
+            show_info_toast(
+                f"{format_type.upper()} ready to copy",
+                "Select all text in the box above and copy to your clipboard",
+            )
+
+    except (ValidationError, ExportError) as e:
+        handle_exception_with_toast(e, f"{format_type} clipboard preparation")
+
+    except Exception as exc:
+        handle_exception_with_toast(exc, f"{format_type} clipboard preparation")
 
 
 def validate_inputs(query: str, n_papers: int, model: str) -> None:
