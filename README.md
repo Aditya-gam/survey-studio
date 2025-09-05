@@ -72,6 +72,11 @@ The application will open in your browser at `http://localhost:8501`.
    poetry run pre-commit install
    ```
 
+4. **(Optional) Prime hook environments:** this can speed up the first commit
+   ```bash
+   poetry run pre-commit install --install-hooks
+   ```
+
 ### Development Workflow
 
 1. **Activate the virtual environment:**
@@ -99,6 +104,62 @@ The application will open in your browser at `http://localhost:8501`.
    ```bash
    poetry run mypy src/
    ```
+
+6. **Pre-commit: run the full code quality pipeline locally:**
+   ```bash
+   poetry run pre-commit run --all-files
+   ```
+   - Runs in this order: detect-secrets → repo hygiene checks → ruff-format → ruff (with --fix) → mypy → poetry-check → poetry-lock
+   - Commit message validation (Commitizen) runs on `commit-msg` and is enforced during `git commit`
+
+### Code Quality Pipeline
+
+The project enforces 100% compliance via Ruff, mypy, detect-secrets, and commit message validation.
+
+- **Ruff formatting**: opinionated code formatting. Imports sorted with isort profile.
+- **Ruff linting**: rule sets enabled: E,W,F,I,B,C4,UP,N,SIM,TCH,ARG,PIE,PT,RET,SLF,TID,ERA,PL.
+- **Type checking (mypy)**: strict configuration; 3rd-party types installed via hook deps.
+- **Secrets scanning**: `detect-secrets` with a committed baseline.
+- **Commit messages**: Conventional Commits validated by Commitizen.
+- **Poetry checks**: validates project metadata and lock consistency.
+
+Per-file ignores are configured to reduce noise:
+- `__init__.py`: ignore `F401` (re-export patterns)
+- `tests/**/*`: ignore `N806` (naming in tests)
+
+### Secrets Scanning
+
+- Baseline file: `.secrets.baseline` (committed)
+- Update baseline after meaningful changes:
+  ```bash
+  poetry run detect-secrets scan > .secrets.baseline
+  git add .secrets.baseline
+  git commit -m "chore(security): update detect-secrets baseline"
+  ```
+- Exclusions: test data and fixtures are excluded by default in the hook.
+
+### Commit Messages (Conventional Commits)
+
+- Use Commitizen to guide commit messages:
+  ```bash
+  poetry run cz commit
+  ```
+- Validate an existing message:
+  ```bash
+  poetry run cz check --message "feat: add new exporter"
+  ```
+
+### Troubleshooting
+
+- **Mypy missing imports**: add stubs or packages to the mypy hook `additional_dependencies` in `.pre-commit-config.yaml`.
+- **Hooks keep reformatting files**: run `poetry run ruff format .` then re-run `pre-commit`. Ensure your editor doesn’t trim/convert line endings unexpectedly.
+- **Pre-commit cache issues**: try `poetry run pre-commit clean` and `poetry run pre-commit gc`.
+- **Secrets false positives**: update the baseline after verifying the match is benign.
+
+### Hook Order and Idempotency
+
+- Hooks are ordered to auto-fix first, then validate. A second run of `pre-commit run --all-files` should produce no changes.
+
 
 ### Project Structure
 
