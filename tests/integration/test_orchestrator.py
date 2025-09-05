@@ -285,7 +285,7 @@ class TestRunSurveyStudio:
         async def failing_run_stream(*, task: str) -> AsyncGenerator[TextMessage, None]:  # noqa: ARG001
             # This is an async generator, so we need to yield before raising
             # to avoid the "coroutine was never awaited" warning
-            if False:  # This will never execute but makes it a proper generator
+            async for _ in []:  # Empty generator that immediately raises
                 yield
             raise RuntimeError("Streaming failed")
 

@@ -319,7 +319,7 @@ class TestWithContext:
         logger = logging.getLogger("test")
         adapter = with_context(logger, key="value")
 
-        msg, kwargs = adapter.process("Test", {})
+        _, kwargs = adapter.process("Test", {})
 
         assert kwargs["extra"]["extra_fields"]["key"] == "value"
 
@@ -330,8 +330,8 @@ class TestWithContext:
         adapter2 = with_context(logger, field2="value2")
 
         # Each adapter should have its own fields
-        msg1, kwargs1 = adapter1.process("Test1", {})
-        msg2, kwargs2 = adapter2.process("Test2", {})
+        _, kwargs1 = adapter1.process("Test1", {})
+        _, kwargs2 = adapter2.process("Test2", {})
 
         fields1 = kwargs1["extra"]["extra_fields"]
         fields2 = kwargs2["extra"]["extra_fields"]

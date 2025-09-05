@@ -115,7 +115,7 @@ class TestValidateNumPapers:
     def test_non_integer_type_raises_error(self) -> None:
         """Test non-integer type raises TypeError."""
         with pytest.raises(TypeError):
-            validate_num_papers("5")  # type: ignore
+            validate_num_papers("5")  # type: ignore[arg-type]
 
 
 class TestValidateModel:

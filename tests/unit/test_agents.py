@@ -157,7 +157,7 @@ class TestBuildTeam:
 
             # Check first call (search agent)
             search_call = mock_agent_class.call_args_list[0]
-            args, kwargs = search_call
+            _, kwargs = search_call
             assert kwargs["name"] == "search_agent"
             assert "Crafts arXiv queries" in kwargs["description"]
             assert len(kwargs["tools"]) == 1  # Has arxiv_tool
@@ -183,7 +183,7 @@ class TestBuildTeam:
 
             # Check second call (summarizer agent)
             summarizer_call = mock_agent_class.call_args_list[1]
-            args, kwargs = summarizer_call
+            _, kwargs = summarizer_call
             assert kwargs["name"] == "summarizer"
             assert "Produces comprehensive Markdown reviews" in kwargs["description"]
             # Summarizer may not have tools parameter or it might be None/empty
