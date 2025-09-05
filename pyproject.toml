@@ -115,6 +115,20 @@ warn_unreachable = true
 strict_equality = true
 show_column_numbers = true
 show_error_codes = true
+strict = true
+files = ["src/survey_studio", "tests"]
+follow_imports = "silent"
+exclude = [
+    "^\\.mypy_cache/",
+    "^\\.venv/",
+    "^venv/",
+    "^build/",
+    "^dist/",
+    "^node_modules/",
+    "^__pypackages__/",
+    "^__pycache__/",
+]
+mypy_path = ["src"]
 
 [[tool.mypy.overrides]]
 module = [

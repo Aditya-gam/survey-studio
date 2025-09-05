@@ -1,15 +1,15 @@
 """Streamlit frontend for the literature review assistant.
 
-A minimal Streamlit frontend for the literature‑review assistant defined in
-`backend.py`.  Users enter a topic and the desired number of papers, then
-watch the two‑agent conversation stream in real‑time.
+Imports the refactored orchestrator entrypoint and keeps UI concerns here.
 """
 
 import asyncio
+import logging
 
 import streamlit as st
 
-from .backend import run_survey_studio
+from .errors import SurveyStudioError, ValidationError
+from .orchestrator import run_survey_studio
 
 
 def configure_page() -> None:
@@ -144,6 +144,18 @@ def main() -> None:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 loop.run_until_complete(run_review_stream(query, n_papers, model))
+            except ValidationError as ve:
+                st.error(str(ve))
+            except SurveyStudioError as se:
+                st.error(
+                    "Something went wrong while running the review. Please try again."
+                )
+                logging.getLogger(__name__).error(
+                    "ui_error", extra={"extra_fields": {"error": str(se)}}
+                )
+            except Exception:
+                st.error("Unexpected error. Check logs for details.")
+                logging.getLogger(__name__).exception("ui_unexpected_error")
 
         st.success("🎉 Literature review completed!")
 
