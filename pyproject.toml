@@ -184,7 +184,7 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
-    # "--cov-fail-under=95"  # Temporarily disabled until tests are added
+    "--cov-fail-under=95"
 ]
 testpaths = ["tests"]
 asyncio_mode = "auto"
@@ -192,13 +192,18 @@ asyncio_mode = "auto"
 [tool.coverage.run]
 source = ["src"]
 branch = true
+omit = [
+    "src/survey_studio/app.py",      # Streamlit UI - integration tested separately
+    "src/survey_studio/backend.py",  # Simple re-export module
+    "src/survey_studio/ui/components.py",  # Placeholder file
+]
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 
 [tool.coverage.report]
 show_missing = true
-# fail_under = 95  # Temporarily disabled until tests are added
+fail_under = 95
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -210,4 +215,5 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
+    "from __future__ import annotations",  # Type checking import in export.py
 ]
