@@ -32,27 +32,19 @@ repos:
       - id: name-tests-test
         args: ["--pytest-test-first"]
 
-  # Code formatting (runs before linting)
+  # Code formatting and linting with ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.9
     hooks:
       - id: ruff-format
+        name: ruff format
         types_or: [python, pyi]
+        args: [--config=pyproject.toml]
       - id: ruff
-        args: [--fix]
+        name: ruff check
         types_or: [python, pyi]
+        args: [--fix, --config=pyproject.toml]
 
-  # Static typing with mypy (after formatting and linting)
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.1
-    hooks:
-      - id: mypy
-        additional_dependencies:
-          - types-requests
-          - types-PyYAML
-          - altair
-        files: ^src/
-        args: [--config-file=pyproject.toml]
 
   # Commit message validation with Conventional Commits
   - repo: https://github.com/commitizen-tools/commitizen

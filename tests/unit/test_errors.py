@@ -10,6 +10,7 @@ from survey_studio.errors import (
     OrchestrationError,
     SurveyStudioError,
     ValidationError,
+    get_error_details,
 )
 
 
@@ -47,7 +48,7 @@ class TestSurveyStudioError:
     def test_default_message(self) -> None:
         """Test default error message."""
         error = SurveyStudioError()
-        assert str(error) == ""
+        assert str(error) == "An error occurred"
 
     def test_custom_message(self) -> None:
         """Test custom error message."""
@@ -67,7 +68,7 @@ class TestArxivSearchError:
     def test_default_message(self) -> None:
         """Test default error message."""
         error = ArxivSearchError()
-        assert str(error) == ""
+        assert str(error) == "arXiv search error"
 
     def test_custom_message(self) -> None:
         """Test custom error message."""
@@ -94,7 +95,7 @@ class TestAgentCreationError:
     def test_default_message(self) -> None:
         """Test default error message."""
         error = AgentCreationError()
-        assert str(error) == ""
+        assert str(error) == "Agent creation error"
 
     def test_custom_message(self) -> None:
         """Test custom error message."""
@@ -121,7 +122,7 @@ class TestValidationError:
     def test_default_message(self) -> None:
         """Test default error message."""
         error = ValidationError()
-        assert str(error) == ""
+        assert str(error) == "Validation error"
 
     def test_custom_message(self) -> None:
         """Test custom error message."""
@@ -148,7 +149,7 @@ class TestOrchestrationError:
     def test_default_message(self) -> None:
         """Test default error message."""
         error = OrchestrationError()
-        assert str(error) == ""
+        assert str(error) == "Orchestration error"
 
     def test_custom_message(self) -> None:
         """Test custom error message."""
@@ -263,12 +264,35 @@ class TestExceptionProperties:
         assert error.args == ("Test message",)
 
     def test_exception_empty_args(self) -> None:
-        """Test exceptions with no message have empty args."""
+        """Test exceptions with no message have default message args."""
         error = SurveyStudioError()
-        assert error.args == ()
+        assert error.args == ("An error occurred",)
 
     def test_exception_str_method(self) -> None:
         """Test exception string representation."""
         error = ValidationError("Test validation")
         assert str(error) == "Test validation"
         assert repr(error) == "ValidationError('Test validation')"
+
+
+class TestErrorDetails:
+    """Test error details extraction."""
+
+    def test_get_error_details_with_original_exception(self) -> None:
+        """Test get_error_details includes original exception details."""
+        original_exc = ValueError("Original error")
+        error = ValidationError("Test error", original_exception=original_exc)
+
+        details = get_error_details(error)
+
+        assert "original_error" in details
+        assert details["original_error"]["type"] == "ValueError"
+        assert details["original_error"]["message"] == "Original error"
+
+    def test_get_error_details_without_original_exception(self) -> None:
+        """Test get_error_details without original exception."""
+        error = ValidationError("Test error")
+
+        details = get_error_details(error)
+
+        assert "original_error" not in details

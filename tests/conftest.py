@@ -35,7 +35,7 @@ def mock_team() -> Mock:
     """Mock AutoGen team with async streaming support."""
     team = Mock(spec=RoundRobinGroupChat)
 
-    async def mock_run_stream(_task: str) -> AsyncGenerator[TextMessage, None]:
+    async def mock_run_stream(*, task: str) -> AsyncGenerator[TextMessage, None]:  # noqa: ARG001
         """Mock streaming that yields test messages."""
         messages = [
             TextMessage(

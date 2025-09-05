@@ -1,6 +1,7 @@
 """Streamlit frontend for the literature review assistant.
 
 Imports the refactored orchestrator entrypoint and keeps UI concerns here.
+Enhanced with comprehensive error handling, retry mechanisms, and notifications.
 """
 
 import asyncio
@@ -8,8 +9,22 @@ import logging
 
 import streamlit as st
 
-from .errors import SurveyStudioError, ValidationError
+from .errors import (
+    ConfigurationError,
+    ExternalServiceError,
+    LLMError,
+    SurveyStudioError,
+    ValidationError,
+)
+from .logging import configure_logging, new_session_id, set_session_id
 from .orchestrator import run_survey_studio
+from .ui.toasts import (
+    handle_exception_with_toast,
+    show_error_panel,
+    show_info_toast,
+    show_success_toast,
+    show_warning_toast,
+)
 
 
 def configure_page() -> None:
@@ -119,53 +134,185 @@ async def run_review_stream(query: str, n_papers: int, model: str) -> None:
                     st.markdown(f"**{role}**: {content}")
 
 
+# Constants
+OPERATION_LITERATURE_REVIEW = "literature review"
+MIN_QUERY_LENGTH = 3
+MAX_PAPERS_ALLOWED = 10
+
+
 def main() -> None:
-    """Main application entry point."""
+    """Main application entry point with enhanced error handling."""
+    # Initialize session and logging
+    _initialize_session()
+
     configure_page()
+    show_error_panel()
 
     # Render sidebar and get configuration
     query, n_papers, model = render_sidebar()
-
-    # Render main content
     render_main_content(query, n_papers, model)
 
     # Handle search button and execution
     if st.sidebar.button("🚀 Start Review", type="primary", disabled=not query):
-        if not query:
-            st.error("Please enter a research topic first!")
-            return
+        _handle_review_execution(query, n_papers, model)
 
-        # Run the literature review
-        with st.spinner(f"Conducting literature review on '{query}'..."):
-            try:
-                asyncio.run(run_review_stream(query, n_papers, model))
-            except RuntimeError:
-                # Fallback for when an event loop is already running
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(run_review_stream(query, n_papers, model))
-            except ValidationError as ve:
-                st.error(str(ve))
-            except SurveyStudioError as se:
-                st.error(
-                    "Something went wrong while running the review. Please try again."
-                )
-                logging.getLogger(__name__).error(
-                    "ui_error", extra={"extra_fields": {"error": str(se)}}
-                )
-            except Exception:
-                st.error("Unexpected error. Check logs for details.")
-                logging.getLogger(__name__).exception("ui_unexpected_error")
 
-        st.success("🎉 Literature review completed!")
+def _initialize_session() -> None:
+    """Initialize session state and logging."""
+    if "session_initialized" not in st.session_state:
+        session_id = new_session_id()
+        set_session_id(session_id)
+        configure_logging()
+        st.session_state.session_initialized = True
+        st.session_state.session_id = session_id
 
-        # Add download button for results (placeholder for future enhancement)
-        st.sidebar.download_button(
-            label="📥 Download Results",
-            data="Literature review results would be here...",
-            file_name=f"literature_review_{query.replace(' ', '_')}.md",
-            mime="text/markdown",
-            help="Download the literature review as a Markdown file",
+
+def _handle_review_execution(query: str, n_papers: int, model: str) -> None:
+    """Handle the literature review execution with error handling."""
+    if not query:
+        show_warning_toast("Please enter a research topic first!")
+        return
+
+    # Validate inputs
+    try:
+        validate_inputs(query, n_papers, model)
+    except (ValidationError, ConfigurationError) as exc:
+        handle_exception_with_toast(exc, "input validation")
+        return
+
+    # Run the literature review
+    _execute_review(query, n_papers, model)
+
+    # Handle download functionality
+    _handle_download(query, n_papers, model)
+
+
+def _execute_review(query: str, n_papers: int, model: str) -> None:
+    """Execute the literature review with comprehensive error handling."""
+    with st.spinner(f"Conducting literature review on '{query}'..."):
+        try:
+            show_info_toast(f"Starting literature review on '{query}'")
+
+            # Run the main operation
+            _run_review_with_fallback(query, n_papers, model)
+
+            # Success feedback
+            show_success_toast(
+                "Literature review completed successfully!",
+                f"Generated review for '{query}' with {n_papers} papers using {model}",
+            )
+
+        except ValidationError as ve:
+            handle_exception_with_toast(ve, "input validation")
+
+        except ConfigurationError as ce:
+            handle_exception_with_toast(ce, "configuration")
+            show_warning_toast(
+                "Configuration issue detected",
+                "Please check your API keys and model settings in the "
+                "environment variables",
+            )
+
+        except ExternalServiceError as ese:
+            handle_exception_with_toast(ese, "external service")
+            show_warning_toast(
+                f"Service temporarily unavailable: "
+                f"{ese.context.get('service', 'Unknown')}",
+                "Please try again in a few moments. If the problem persists, "
+                "the service may be experiencing issues.",
+            )
+
+        except LLMError as le:
+            handle_exception_with_toast(le, "AI model")
+            show_warning_toast(
+                "AI model encountered an issue",
+                f"Model: {le.context.get('model', 'Unknown')}. This could be "
+                "due to rate limits or service issues.",
+            )
+
+        except SurveyStudioError as se:
+            handle_exception_with_toast(se, OPERATION_LITERATURE_REVIEW)
+
+        except Exception as exc:
+            handle_exception_with_toast(exc, OPERATION_LITERATURE_REVIEW)
+            logging.getLogger(__name__).exception(
+                "Unexpected error in main review process",
+                extra={
+                    "extra_fields": {
+                        "query": query,
+                        "model": model,
+                        "n_papers": n_papers,
+                    }
+                },
+            )
+
+
+def _run_review_with_fallback(query: str, n_papers: int, model: str) -> None:
+    """Run the review with asyncio fallback handling."""
+    try:
+        asyncio.run(run_review_stream(query, n_papers, model))
+    except RuntimeError:
+        # Fallback for when an event loop is already running
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(run_review_stream(query, n_papers, model))
+
+
+def _handle_download(query: str, n_papers: int, model: str) -> None:
+    """Handle download functionality."""
+    if st.sidebar.button(
+        "📥 Download Results", help="Download the literature review results"
+    ):
+        try:
+            # Placeholder for future enhancement
+            download_data = (
+                f"# Literature Review: {query}\n\n"
+                f"Generated on: {st.session_state.get('session_id', 'unknown')}\n"
+                f"Model: {model}\nPapers: {n_papers}\n\n[Results would be here...]"
+            )
+
+            st.sidebar.download_button(
+                label="📥 Download Markdown",
+                data=download_data,
+                file_name=f"literature_review_{query.replace(' ', '_')}.md",
+                mime="text/markdown",
+            )
+
+            show_success_toast(
+                "Download prepared", "Click the download button to save your results"
+            )
+
+        except Exception as exc:
+            handle_exception_with_toast(exc, "download preparation")
+
+
+def validate_inputs(query: str, n_papers: int, model: str) -> None:
+    """Validate user inputs and raise ValidationError if invalid."""
+    if not query or not query.strip():
+        raise ValidationError("Research topic cannot be empty", field="query")
+
+    if len(query.strip()) < MIN_QUERY_LENGTH:
+        raise ValidationError(
+            f"Research topic must be at least {MIN_QUERY_LENGTH} characters long",
+            field="query",
+        )
+
+    if n_papers < 1 or n_papers > MAX_PAPERS_ALLOWED:
+        raise ValidationError(
+            f"Number of papers must be between 1 and {MAX_PAPERS_ALLOWED}",
+            field="n_papers",
+        )
+
+    if model not in ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"]:
+        raise ValidationError(f"Invalid model selected: {model}", field="model")
+
+    # Check for API key configuration (basic check)
+    import os
+
+    if not os.getenv("OPENAI_API_KEY"):
+        raise ConfigurationError(
+            "OpenAI API key not configured",
+            context={"missing_env_var": "OPENAI_API_KEY"},
         )
 
 

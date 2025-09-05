@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 from autogen_core.tools import FunctionTool
 import pytest
 
-from survey_studio.errors import ArxivSearchError
+from survey_studio.errors import ArxivSearchError, ExternalServiceError
 from survey_studio.tools import arxiv_search, arxiv_tool
 
 # Constants for magic numbers
@@ -175,18 +175,15 @@ class TestArxivSearch:
                 "survey_studio.tools.arxiv.Client",
                 side_effect=Exception("Network error"),
             ),
-            patch("survey_studio.tools.with_context") as mock_with_context,
+            patch("survey_studio.tools.logger") as mock_logger,
         ):
-            mock_context_logger = Mock()
-            mock_with_context.return_value = mock_context_logger
-
             with pytest.raises(
                 ArxivSearchError, match="Failed to fetch results from arXiv"
             ):
                 arxiv_search("test query", 5)
 
             # Verify error was logged
-            mock_context_logger.error.assert_called_once()
+            mock_logger.error.assert_called_once()
 
     def test_arxiv_search_preserves_original_exception(self) -> None:
         """Test arXiv search preserves original exception in ArxivSearchError."""
@@ -240,6 +237,8 @@ class TestArxivSearch:
         mock_result.published.strftime.return_value = "2023-12-01"
         mock_result.summary = "This paper explores advanced ML techniques."
         mock_result.pdf_url = "https://arxiv.org/pdf/2312.00123.pdf"
+        mock_result.entry_id = "2312.00123"
+        mock_result.categories = ["cs.LG", "cs.AI"]
 
         expected_result = {
             "title": "Advanced Machine Learning",
@@ -247,6 +246,8 @@ class TestArxivSearch:
             "published": "2023-12-01",
             "summary": "This paper explores advanced ML techniques.",
             "pdf_url": "https://arxiv.org/pdf/2312.00123.pdf",
+            "entry_id": "2312.00123",
+            "categories": ["cs.LG", "cs.AI"],
         }
 
         with (
@@ -321,3 +322,36 @@ class TestArxivTool:
         # We'll test this indirectly by checking the tool's behavior
         assert hasattr(arxiv_tool, "_func")
         assert callable(arxiv_tool._func)  # noqa: SLF001
+
+    def test_arxiv_search_empty_query_raises_error(self) -> None:
+        """Test arxiv_search raises error for empty query."""
+        with pytest.raises(ExternalServiceError) as exc_info:
+            arxiv_search("")
+
+        assert "Empty query provided to arXiv search" in str(exc_info.value)
+        assert exc_info.value.context["service"] == "arXiv"
+        assert exc_info.value.context["query"] == ""
+
+    def test_arxiv_search_whitespace_only_query_raises_error(self) -> None:
+        """Test arxiv_search raises error for whitespace-only query."""
+        with pytest.raises(ExternalServiceError) as exc_info:
+            arxiv_search("   \t\n   ")
+
+        assert "Empty query provided to arXiv search" in str(exc_info.value)
+        assert exc_info.value.context["service"] == "arXiv"
+
+    def test_arxiv_search_invalid_max_results_raises_error(self) -> None:
+        """Test arxiv_search raises error for invalid max_results."""
+        with pytest.raises(ExternalServiceError) as exc_info:
+            arxiv_search("test", max_results=0)
+
+        assert "Invalid max_results" in str(exc_info.value)
+        assert exc_info.value.context["service"] == "arXiv"
+
+    def test_arxiv_search_too_many_results_raises_error(self) -> None:
+        """Test arxiv_search raises error for too many results."""
+        with pytest.raises(ExternalServiceError) as exc_info:
+            arxiv_search("test", max_results=1000)
+
+        assert "Invalid max_results" in str(exc_info.value)
+        assert exc_info.value.context["service"] == "arXiv"

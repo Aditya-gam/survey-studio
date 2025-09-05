@@ -27,7 +27,8 @@ class TestRunSurveyStudio:
     ) -> None:
         """Helper function to run survey studio and collect all results."""
         async for _ in run_survey_studio(topic, num_papers, model):
-            pass
+            # Consume all messages to test error handling
+            continue
 
     @pytest.mark.asyncio
     async def test_run_survey_studio_success(self, mock_team: Mock) -> None:
@@ -144,7 +145,8 @@ class TestRunSurveyStudio:
 
             async def _run_invalid_topic() -> None:
                 async for _ in run_survey_studio("", 5):
-                    pass
+                    # Consume all messages to test validation
+                    continue
 
             with pytest.raises(
                 OrchestrationError, match="Failed to run literature review"
@@ -172,7 +174,8 @@ class TestRunSurveyStudio:
 
             async def _run_invalid_papers() -> None:
                 async for _ in run_survey_studio("Valid Topic", 0):
-                    pass
+                    # Consume all messages to test validation
+                    continue
 
             with pytest.raises(
                 OrchestrationError, match="Failed to run literature review"
@@ -201,7 +204,8 @@ class TestRunSurveyStudio:
 
             async def _run_invalid_model() -> None:
                 async for _ in run_survey_studio("Valid Topic", 5, "invalid-model"):
-                    pass
+                    # Consume all messages to test validation
+                    continue
 
             with pytest.raises(
                 OrchestrationError, match="Failed to run literature review"
@@ -233,7 +237,8 @@ class TestRunSurveyStudio:
 
             async def _run_invalid_api_key() -> None:
                 async for _ in run_survey_studio("Valid Topic", 5):
-                    pass
+                    # Consume all messages to test validation
+                    continue
 
             with pytest.raises(
                 OrchestrationError, match="Failed to run literature review"
@@ -277,10 +282,12 @@ class TestRunSurveyStudio:
         """Test run_survey_studio handles streaming error."""
 
         # Create a mock team that raises an exception during streaming
-        async def failing_run_stream(
-            *_args: object, **_kwargs: object
-        ) -> AsyncGenerator[TextMessage, None]:
-            raise Exception("Streaming failed")
+        async def failing_run_stream(*, task: str) -> AsyncGenerator[TextMessage, None]:  # noqa: ARG001
+            # This is an async generator, so we need to yield before raising
+            # to avoid the "coroutine was never awaited" warning
+            if False:  # This will never execute but makes it a proper generator
+                yield
+            raise RuntimeError("Streaming failed")
 
         mock_team.run_stream = failing_run_stream
 
@@ -427,8 +434,12 @@ class TestRunSurveyStudio:
         async def empty_run_stream(
             *_args: object, **_kwargs: object
         ) -> AsyncGenerator[TextMessage, None]:
-            return
-            yield  # pragma: no cover
+            # Empty generator - no messages to yield
+            # This is intentionally empty to test empty stream handling
+            # Use a variable to avoid constant condition warning
+            empty_list: list[TextMessage] = []
+            for _ in empty_list:
+                yield TextMessage(source="", content="")
 
         mock_team.run_stream = empty_run_stream
 

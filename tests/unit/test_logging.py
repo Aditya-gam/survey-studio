@@ -11,6 +11,7 @@ from survey_studio.logging import (
     _safe,
     configure_logging,
     get_session_id,
+    log_error_with_details,
     new_session_id,
     set_session_id,
     with_context,
@@ -392,3 +393,54 @@ class TestLoggingIntegration:
 
             result = formatter.format(record)
             assert f"session_id={session_id}" in result
+
+
+class TestLoggingErrorContext:
+    """Test error context creation in logging."""
+
+    def test_log_error_with_details_with_original_error(self) -> None:
+        """Test log_error_with_details includes original error details."""
+        from survey_studio.errors import ValidationError
+
+        logger = logging.getLogger("test")
+        original_exc = ValueError("Original error")
+        error = ValidationError("Test error", original_exception=original_exc)
+
+        with patch.object(logger, "error") as mock_error:
+            log_error_with_details(
+                logger, error, "test_operation", "test_component", additional="data"
+            )
+
+            # Verify error was logged
+            mock_error.assert_called_once()
+            call_args = mock_error.call_args
+            extra_fields = call_args[1]["extra"]["extra_fields"]
+
+            assert extra_fields["original_error_type"] == "ValueError"
+            assert extra_fields["additional"] == "data"
+            assert extra_fields["error_type"] == "ValidationError"
+            assert extra_fields["component"] == "test_component"
+            assert extra_fields["operation"] == "test_operation"
+
+    def test_log_error_with_details_without_original_error(self) -> None:
+        """Test log_error_with_details without original error."""
+        from survey_studio.errors import ValidationError
+
+        logger = logging.getLogger("test")
+        error = ValidationError("Test error")
+
+        with patch.object(logger, "error") as mock_error:
+            log_error_with_details(
+                logger, error, "test_operation", "test_component", additional="data"
+            )
+
+            # Verify error was logged
+            mock_error.assert_called_once()
+            call_args = mock_error.call_args
+            extra_fields = call_args[1]["extra"]["extra_fields"]
+
+            assert "original_error_type" not in extra_fields
+            assert extra_fields["additional"] == "data"
+            assert extra_fields["error_type"] == "ValidationError"
+            assert extra_fields["component"] == "test_component"
+            assert extra_fields["operation"] == "test_operation"

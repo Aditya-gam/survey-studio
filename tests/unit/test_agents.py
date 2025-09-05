@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from unittest.mock import Mock, patch
 
 from autogen_agentchat.agents import AssistantAgent
@@ -10,12 +11,12 @@ from autogen_agentchat.teams import RoundRobinGroupChat
 import pytest
 
 from survey_studio.agents import build_team, make_llm_client
-from survey_studio.errors import AgentCreationError
+from survey_studio.errors import AgentCreationError, ConfigurationError
 
 # Constants for magic numbers
 EXPECTED_AGENT_COUNT = 2
 EXPECTED_PARTICIPANT_COUNT = 2
-EXPECTED_MAX_TURNS = 2
+EXPECTED_MAX_TURNS = 4
 
 
 class TestMakeLlmClient:
@@ -95,17 +96,9 @@ class TestMakeLlmClient:
             assert exc_info.value.__cause__ is original_error
 
     def test_make_llm_client_with_empty_api_key(self) -> None:
-        """Test LLM client creation with empty API key."""
-        with patch(
-            "survey_studio.agents.OpenAIChatCompletionClient"
-        ) as mock_client_class:
-            mock_client = Mock()
-            mock_client_class.return_value = mock_client
-
-            result = make_llm_client("gpt-4o-mini", "")
-
-            mock_client_class.assert_called_once_with(model="gpt-4o-mini", api_key="")
-            assert result is mock_client
+        """Test LLM client creation with empty API key raises ConfigurationError."""
+        with pytest.raises(ConfigurationError, match="API key cannot be empty"):
+            make_llm_client("gpt-4o-mini", "")
 
 
 class TestBuildTeam:
@@ -122,6 +115,7 @@ class TestBuildTeam:
             patch("survey_studio.agents.RoundRobinGroupChat") as mock_team_class,
         ):
             mock_team = Mock(spec=RoundRobinGroupChat)
+            mock_team.max_turns = 4
             mock_team_class.return_value = mock_team
 
             result = build_team("gpt-4o-mini", "test-key  # pragma: allowlist secret")
@@ -191,7 +185,7 @@ class TestBuildTeam:
             summarizer_call = mock_agent_class.call_args_list[1]
             args, kwargs = summarizer_call
             assert kwargs["name"] == "summarizer"
-            assert "Produces a short Markdown review" in kwargs["description"]
+            assert "Produces comprehensive Markdown reviews" in kwargs["description"]
             # Summarizer may not have tools parameter or it might be None/empty
             tools = kwargs.get("tools")
             assert tools is None or len(tools) == 0  # No tools for summarizer
@@ -219,12 +213,12 @@ class TestBuildTeam:
             search_call = calls[0]
             search_system = search_call[1]["system_message"]
             assert "arxiv query" in search_system.lower()
-            assert "five-times the papers" in search_system
+            assert "up to 5x" in search_system
 
             # Check summarizer system message
             summarizer_call = calls[1]
             summarizer_system = summarizer_call[1]["system_message"]
-            assert "literature-review style report" in summarizer_system
+            assert "literature reviews" in summarizer_system
             assert "markdown" in summarizer_system.lower()
 
     def test_build_team_round_robin_configuration(
@@ -243,6 +237,7 @@ class TestBuildTeam:
             mock_agent_class.side_effect = [mock_search_agent, mock_summarizer]
 
             mock_team = Mock(spec=RoundRobinGroupChat)
+            mock_team.max_turns = 4
             mock_team_class.return_value = mock_team
 
             build_team("gpt-4o-mini", "test-key  # pragma: allowlist secret")
@@ -343,3 +338,36 @@ class TestBuildTeam:
             mock_make_client.assert_called_with(
                 model="gpt-4o", api_key="test-key  # pragma: allowlist secret"
             )
+
+    def test_make_llm_client_with_unknown_model_warning(self) -> None:
+        """Test make_llm_client logs warning for unknown model."""
+        with patch("survey_studio.agents.with_context") as mock_with_context:
+            mock_logger = Mock()
+            mock_with_context.return_value = mock_logger
+
+            with patch(
+                "survey_studio.agents.OpenAIChatCompletionClient"
+            ) as mock_client_class:
+                mock_client = Mock()
+                mock_client_class.return_value = mock_client
+
+                # Test with unknown model
+                make_llm_client("unknown-model", "test-key")
+
+                # Verify warning was logged
+                mock_logger.warning.assert_called_once()
+                call_args = mock_logger.warning.call_args
+                assert (
+                    "Model 'unknown-model' not in known valid models list"
+                    in call_args[0][0]
+                )
+                assert call_args[1]["extra"]["extra_fields"]["model"] == "unknown-model"
+
+    def test_make_llm_client_missing_api_key_raises_error(self) -> None:
+        """Test make_llm_client raises ConfigurationError when API key is missing."""
+        with patch.dict(os.environ, {}, clear=True):
+            with pytest.raises(ConfigurationError) as exc_info:
+                make_llm_client("gpt-4o-mini", "")
+
+            assert "API key cannot be empty" in str(exc_info.value)
+            assert exc_info.value.context["model"] == "gpt-4o-mini"
