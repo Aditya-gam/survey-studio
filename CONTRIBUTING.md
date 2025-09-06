@@ -57,7 +57,7 @@ Prerequisites: Python 3.12.11+, Poetry.
 
 1. Clone and install:
    ```bash
-   git clone https://github.com/survey-studio/survey-studio.git
+   git clone https://github.com/Aditya-gam/survey-studio.git
    cd survey-studio
    poetry install --with dev
    ```

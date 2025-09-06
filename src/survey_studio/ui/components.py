@@ -38,7 +38,7 @@ def header(title: str = "Survey Studio", tagline: str | None = None) -> None:
     with col2:
         st.link_button(
             "GitHub",
-            "https://github.com/survey-studio/survey-studio",
+            "https://github.com/Aditya-gam/survey-studio",
             help="Open the repository",
             use_container_width=True,
             type="secondary",
@@ -106,7 +106,7 @@ def footer(app_version: str, commit_sha_short: str | None = None) -> None:
         <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
           <span>Version: <code>{app_version}</code></span>
           <span>Commit: <code>{sha_display}</code></span>
-          <a href="https://github.com/survey-studio/survey-studio/blob/main/CHANGELOG.md"
+          <a href="https://github.com/Aditya-gam/survey-studio/blob/main/CHANGELOG.md"
              target="_blank">Changelog</a>
           <span style="margin-left: auto;">© 2025 Survey Studio · MIT License</span>
         </div>

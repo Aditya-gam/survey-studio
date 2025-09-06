@@ -62,8 +62,8 @@ def configure_page() -> None:
         layout="wide",
         initial_sidebar_state="expanded",
         menu_items={
-            "Get Help": "https://github.com/survey-studio/survey-studio",
-            "Report a bug": "https://github.com/survey-studio/survey-studio/issues",
+            "Get Help": "https://github.com/Aditya-gam/survey-studio",
+            "Report a bug": "https://github.com/Aditya-gam/survey-studio/issues",
             "About": """
             # Survey Studio
 

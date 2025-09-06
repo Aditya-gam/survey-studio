@@ -45,10 +45,10 @@ dev = [
 survey-studio = "survey_studio.app:main"
 
 [project.urls]
-Homepage = "https://github.com/survey-studio/survey-studio"
-Repository = "https://github.com/survey-studio/survey-studio"
-Documentation = "https://github.com/survey-studio/survey-studio/wiki"
-"Bug Reports" = "https://github.com/survey-studio/survey-studio/issues"
+Homepage = "https://github.com/Aditya-gam/survey-studio"
+Repository = "https://github.com/Aditya-gam/survey-studio"
+Documentation = "https://github.com/Aditya-gam/survey-studio/wiki"
+"Bug Reports" = "https://github.com/Aditya-gam/survey-studio/issues"
 
 [tool.poetry]
 packages = [{include = "survey_studio", from = "src"}]

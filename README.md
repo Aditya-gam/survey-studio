@@ -6,8 +6,8 @@ A multi-agent literature review assistant powered by AutoGen and Streamlit. Surv
 [![Poetry](https://img.shields.io/badge/poetry-managed-1f5fff.svg)](https://python-poetry.org/)
 [![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://docs.astral.sh/ruff/)
 [![mypy](https://img.shields.io/badge/type--checker-mypy-blue)](https://mypy-lang.org/)
-[![CI](https://github.com/survey-studio/survey-studio/workflows/CI/badge.svg)](https://github.com/survey-studio/survey-studio/actions)
-[![Coverage](https://codecov.io/gh/survey-studio/survey-studio/branch/main/graph/badge.svg)](https://codecov.io/gh/survey-studio/survey-studio)
+[![CI](https://github.com/Aditya-gam/survey-studio/workflows/CI/badge.svg)](https://github.com/Aditya-gam/survey-studio/actions)
+[![Coverage](https://codecov.io/gh/Aditya-gam/survey-studio/branch/main/graph/badge.svg)](https://codecov.io/gh/Aditya-gam/survey-studio)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](https://commitizen-tools.github.io/commitizen/)
 
@@ -63,7 +63,7 @@ flowchart TD
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/survey-studio/survey-studio.git
+   git clone https://github.com/Aditya-gam/survey-studio.git
    cd survey-studio
    ```
 
@@ -118,7 +118,7 @@ poetry run streamlit run streamlit_app.py --server.port 8502
 
 2. **Clone and install dependencies:**
    ```bash
-   git clone https://github.com/survey-studio/survey-studio.git
+   git clone https://github.com/Aditya-gam/survey-studio.git
    cd survey-studio
    poetry install
    ```
@@ -397,9 +397,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you have questions or need help:
 
-1. Check the [documentation](https://github.com/survey-studio/survey-studio/wiki)
-2. Search [existing issues](https://github.com/survey-studio/survey-studio/issues)
-3. Create a [new issue](https://github.com/survey-studio/survey-studio/issues/new)
+1. Check the [documentation](https://github.com/Aditya-gam/survey-studio/wiki)
+2. Search [existing issues](https://github.com/Aditya-gam/survey-studio/issues)
+3. Create a [new issue](https://github.com/Aditya-gam/survey-studio/issues/new)
 
 ---
 
