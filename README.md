@@ -2,12 +2,14 @@
 
 A multi-agent literature review assistant powered by AutoGen and Streamlit. Survey Studio uses AI agents to automatically search arXiv, analyze research papers, and generate comprehensive literature reviews.
 
-![Python](https://img.shields.io/badge/python-3.11.9+-blue.svg)
-![Poetry](https://img.shields.io/badge/dependency--management-poetry-blue)
-![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
-![Type Checker: mypy](https://img.shields.io/badge/type--checker-mypy-blue)
-![CI](https://github.com/survey-studio/survey-studio/workflows/CI/badge.svg)
-![Coverage](https://codecov.io/gh/survey-studio/survey-studio/branch/main/graph/badge.svg)
+[![Python](https://img.shields.io/badge/python-3.12.11+-blue.svg)](https://www.python.org/downloads/release/python-31211/)
+[![Poetry](https://img.shields.io/badge/poetry-managed-1f5fff.svg)](https://python-poetry.org/)
+[![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://docs.astral.sh/ruff/)
+[![mypy](https://img.shields.io/badge/type--checker-mypy-blue)](https://mypy-lang.org/)
+[![CI](https://github.com/survey-studio/survey-studio/workflows/CI/badge.svg)](https://github.com/survey-studio/survey-studio/actions)
+[![Coverage](https://codecov.io/gh/survey-studio/survey-studio/branch/main/graph/badge.svg)](https://codecov.io/gh/survey-studio/survey-studio)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](https://commitizen-tools.github.io/commitizen/)
 
 ## 🌟 Features
 
@@ -19,11 +21,41 @@ A multi-agent literature review assistant powered by AutoGen and Streamlit. Surv
 - **Configurable**: Adjustable number of papers, AI models, and search parameters
 - **Professional Development Setup**: Full CI/CD pipeline with testing, linting, and type checking
 
+## 🧭 Architecture
+
+```mermaid
+flowchart TD
+  subgraph UI["Streamlit UI"]
+    User["User"] -->|"inputs topic, params"| Sidebar["Sidebar Controls"]
+    Chat["Chat Panel"] -->|"streams responses"| User
+  end
+
+  subgraph Backend["Survey Studio Orchestrator"]
+    Orchestrator["Orchestrator"] --> SearchAgent
+    Orchestrator --> SummarizerAgent
+  end
+
+  SearchAgent["Search Agent"] -->|"queries"| ArXiv[("arXiv API")]
+  SearchAgent -->|"returns papers"| Orchestrator
+  SummarizerAgent["Summarizer Agent"] -->|"LLM calls"| OpenAI[("OpenAI API")]
+  Orchestrator -->|"updates"| UI
+```
+
+- **Streamlit UI**: Collects user input, renders agent conversation and results.
+- **Search Agent**: Generates and executes arXiv queries.
+- **Summarizer Agent**: Produces structured review using OpenAI models.
+- **Orchestrator**: Manages the multi-agent loop and data flow.
+
+## 🖼 Screenshots & Media
+
+- Placeholder: Streamlit sidebar and chat view (add screenshots here)
+- Placeholder: End-to-end GIF of literature review workflow
+
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.11.9+
+- Python 3.12.11+
 - Poetry (for dependency management)
 - OpenAI API key
 
@@ -51,6 +83,29 @@ A multi-agent literature review assistant powered by AutoGen and Streamlit. Surv
    ```
 
 The application will open in your browser at `http://localhost:8501`.
+
+### Secrets Management
+
+- Local: create `.streamlit/secrets.toml`
+  ```toml
+  OPENAI_API_KEY = "your-openai-api-key-here"
+  ```
+- In code, read via `st.secrets["OPENAI_API_KEY"]` or environment variable.
+
+### Deploy to Streamlit Community Cloud
+
+1. Push the repository to GitHub.
+2. Go to Streamlit Community Cloud and create a new app from the repo.
+3. Set `OPENAI_API_KEY` in the app Secrets.
+4. Deploy. The app will build with Poetry and start automatically.
+
+### Local Port Configuration
+
+Specify a custom port if 8501 is busy:
+
+```bash
+poetry run streamlit run streamlit_app.py --server.port 8502
+```
 
 ## 🛠 Development Setup
 
@@ -80,14 +135,15 @@ The application will open in your browser at `http://localhost:8501`.
 
 ### Development Workflow
 
-1. **Activate the virtual environment:**
+1. **No venv activation required (use Poetry runner):**
    ```bash
-   poetry shell
+   # Prefer prefixing commands with 'poetry run'
+   poetry run <command>
    ```
 
-2. **Run the development server:**
+2. **Run the development server (custom port optional):**
    ```bash
-   streamlit run streamlit_app.py
+   poetry run streamlit run streamlit_app.py --server.port 8501
    ```
 
 3. **Run tests:**
@@ -152,9 +208,27 @@ Per-file ignores are configured to reduce noise:
 
 ### Troubleshooting
 
-- **Mypy missing imports**: add stubs or packages to the mypy hook `additional_dependencies` in `.pre-commit-config.yaml`.
-- **Hooks keep reformatting files**: run `poetry run ruff format .` then re-run `pre-commit`. Ensure your editor doesn’t trim/convert line endings unexpectedly.
-- **Pre-commit cache issues**: try `poetry run pre-commit clean` and `poetry run pre-commit gc`.
+- **Poetry not found / path issues**:
+  - Install: `curl -sSL https://install.python-poetry.org | python3 -`
+  - Ensure Poetry is on PATH. On macOS (zsh): add `export PATH="$HOME/.local/bin:$PATH"` to `~/.zshrc`.
+- **Python 3.12.11 not available**:
+  - Install via `pyenv`: `pyenv install 3.12.11 && pyenv local 3.12.11`
+  - Recreate env: `poetry env use 3.12 && poetry install`
+- **Dependency resolution failures**:
+  - `poetry lock --no-update` then `poetry install --sync`
+  - Clear cache: `poetry cache clear pypi --all`
+- **Streamlit port already in use**:
+  - Run on a new port: `poetry run streamlit run streamlit_app.py --server.port 8502`
+  - Or set in `.streamlit/config.toml` under `[server] port = 8502`
+- **OpenAI API key not detected**:
+  - Ensure `OPENAI_API_KEY` is exported in your shell profile and available to the app
+  - For Streamlit Cloud, set in app Secrets
+- **Mypy missing imports**:
+  - Add stubs or packages to mypy hook `additional_dependencies` in `.pre-commit-config.yaml`
+- **Pre-commit keeps changing files**:
+  - Run `poetry run ruff format .` then `poetry run pre-commit run --all-files`
+- **Commit message rejected** (Conventional Commits):
+  - Use Commitizen: `poetry run cz commit`
 
 ### CI Validation Locally
 
@@ -197,7 +271,7 @@ survey-studio/
 ├── .streamlit/
 │   └── config.toml            # Streamlit configuration
 ├── .github/
-│   └── workflows/             # CI/CD workflows (future)
+│   └── workflows/             # CI/CD workflows
 ├── pyproject.toml             # Poetry configuration
 ├── .pre-commit-config.yaml    # Pre-commit hooks
 ├── .gitignore                 # Git ignore rules
@@ -280,12 +354,12 @@ The `.streamlit/config.toml` file contains UI theme and server settings.
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
+2. Create a feature branch: `git checkout -b feat/amazing-feature`
 3. Make your changes
 4. Run tests and linting: `poetry run pytest && poetry run ruff check .`
 5. Commit your changes: `git commit -m 'feat: add amazing feature'`
 6. Push to the branch: `git push origin feature/amazing-feature`
-7. Open a Pull Request
+7. Open a Pull Request (rebase merge strategy, no merge commits). See `CONTRIBUTING.md` for details.
 
 ### Commit Convention
 
@@ -306,7 +380,7 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 - **Data Source**: arXiv API
 - **AI Models**: OpenAI GPT (configurable)
 - **Development**: Poetry, Ruff, mypy, pytest
-- **CI/CD**: Pre-commit hooks, GitHub Actions (planned)
+- **CI/CD**: Pre-commit hooks, GitHub Actions
 
 ## 📄 License
 

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/survey-studio/survey-studio/wiki
+    about: Read the project documentation
+  - name: Q&A / Discussions
+    url: https://github.com/survey-studio/survey-studio/discussions
+    about: Ask questions and share ideas

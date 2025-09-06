@@ -1156,10 +1156,7 @@ files = [
 ]
 
 [package.dependencies]
-numpy = [
-    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
-]
+numpy = {version = ">=1.26.0", markers = "python_version >= \"3.12\""}
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
 tzdata = ">=2022.7"
@@ -2438,5 +2435,5 @@ dev = ["coverage", "detect-secrets", "pre-commit", "pytest", "pytest-asyncio", "
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.11.9"
-content-hash = "70b882a1addeecdd9d935ab97c5b1a756292f042a52b4c21cc7e20739ddd3e58"
+python-versions = ">=3.12.11"
+content-hash = "a1c717464b55b0d9ac8465837ecf85de28164bbe1b5ab876b6327b9adf73f9c5"
