@@ -5,7 +5,7 @@ A multi-agent literature review assistant powered by AutoGen and Streamlit. Surv
 [![Python](https://img.shields.io/badge/python-3.12.11+-blue.svg)](https://www.python.org/downloads/release/python-31211/)
 [![Poetry](https://img.shields.io/badge/poetry-managed-1f5fff.svg)](https://python-poetry.org/)
 [![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://docs.astral.sh/ruff/)
-[![mypy](https://img.shields.io/badge/type--checker-mypy-blue)](https://mypy-lang.org/)
+[![Pyright](https://img.shields.io/badge/type--checker-Pyright-blue)](https://github.com/microsoft/pyright)
 [![CI](https://github.com/Aditya-gam/survey-studio/workflows/CI/badge.svg)](https://github.com/Aditya-gam/survey-studio/actions)
 [![Coverage](https://codecov.io/gh/Aditya-gam/survey-studio/branch/main/graph/badge.svg)](https://codecov.io/gh/Aditya-gam/survey-studio)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -159,23 +159,23 @@ poetry run streamlit run streamlit_app.py --server.port 8502
 
 5. **Type checking:**
    ```bash
-   poetry run mypy src/
+   poetry run pyright
    ```
 
 6. **Pre-commit: run the full code quality pipeline locally:**
    ```bash
    poetry run pre-commit run --all-files
    ```
-   - Runs in this order: detect-secrets → repo hygiene checks → ruff-format → ruff (with --fix) → mypy → poetry-check → poetry-lock
+   - Runs in this order: detect-secrets → repo hygiene checks → ruff-format → ruff (with --fix) → pyright → poetry-check → poetry-lock
    - Commit message validation (Commitizen) runs on `commit-msg` and is enforced during `git commit`
 
 ### Code Quality Pipeline
 
-The project enforces 100% compliance via Ruff, mypy, detect-secrets, and commit message validation.
+The project enforces 100% compliance via Ruff, Pyright, detect-secrets, and commit message validation.
 
 - **Ruff formatting**: opinionated code formatting. Imports sorted with isort profile.
 - **Ruff linting**: rule sets enabled: E,W,F,I,B,C4,UP,N,SIM,TCH,ARG,PIE,PT,RET,SLF,TID,ERA,PL.
-- **Type checking (mypy)**: strict configuration; 3rd-party types installed via hook deps.
+- **Type checking (Pyright)**: strict configuration; comprehensive type checking with Microsoft's Pyright.
 - **Secrets scanning**: `detect-secrets` with a committed baseline.
 - **Commit messages**: Conventional Commits validated by Commitizen.
 - **Poetry checks**: validates project metadata and lock consistency.
@@ -223,8 +223,8 @@ Per-file ignores are configured to reduce noise:
 - **OpenAI API key not detected**:
   - Ensure `OPENAI_API_KEY` is exported in your shell profile and available to the app
   - For Streamlit Cloud, set in app Secrets
-- **Mypy missing imports**:
-  - Add stubs or packages to mypy hook `additional_dependencies` in `.pre-commit-config.yaml`
+- **Pyright missing imports**:
+  - Add stubs or packages to Pyright configuration in `pyproject.toml`
 - **Pre-commit keeps changing files**:
   - Run `poetry run ruff format .` then `poetry run pre-commit run --all-files`
 - **Commit message rejected** (Conventional Commits):
@@ -250,7 +250,7 @@ CODECOV_TOKEN=your_token act -j test
 Common CI issues and resolutions:
 - Missing Poetry: ensure the workflow installs the pinned Poetry version.
 - Coverage below 95%: add or improve tests; check exclusions in `pyproject.toml`.
-- Mypy import errors: add stubs or dependencies under mypy hook `additional_dependencies`.
+- Pyright import errors: add stubs or dependencies under Pyright configuration in `pyproject.toml`.
 - **Secrets false positives**: update the baseline after verifying the match is benign.
 
 ### Hook Order and Idempotency
@@ -330,7 +330,7 @@ poetry run pytest tests/unit/test_tools.py
 
 ### CI/CD
 
-- GitHub Actions runs three jobs on push/PR: Lint (Ruff), Type (mypy), Test (pytest+coverage).
+- GitHub Actions runs three jobs on push/PR: Lint (Ruff), Type (Pyright), Test (pytest+coverage).
 - Coverage is uploaded to Codecov, and the CI enforces the 95% threshold.
 - Badges: CI and Coverage appear at the top of this README.
 
@@ -348,7 +348,7 @@ The `.streamlit/config.toml` file contains UI theme and server settings.
 
 1. Add GitHub secret `CODECOV_TOKEN` with your repository token from Codecov.
 2. Install the Codecov GitHub App on the repository and enable status checks.
-3. Ensure required status checks include: `Lint (Ruff)`, `Type Check (mypy)`, `Test (pytest + coverage)`, and `codecov/project`, `codecov/patch`.
+3. Ensure required status checks include: `Lint (Ruff)`, `Type Check (Pyright)`, `Test (pytest + coverage)`, and `codecov/project`, `codecov/patch`.
 4. Branch protection: require pull request reviews, dismiss stale approvals on new commits, and enforce linear history (rebase merges).
 
 ## 🤝 Contributing
@@ -379,7 +379,7 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 - **Frontend**: Streamlit (web interface)
 - **Data Source**: arXiv API
 - **AI Models**: OpenAI GPT (configurable)
-- **Development**: Poetry, Ruff, mypy, pytest
+- **Development**: Poetry, Ruff, Pyright, pytest
 - **CI/CD**: Pre-commit hooks, GitHub Actions
 
 ## 📄 License

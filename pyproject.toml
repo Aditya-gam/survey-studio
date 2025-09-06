@@ -39,6 +39,7 @@ dev = [
     "coverage==7.6.1",
     "pre-commit==3.8.0",
     "detect-secrets==1.5.0",
+    "pyright==1.1.378",
 ]
 
 [project.scripts]
@@ -66,7 +67,6 @@ exclude = [
     ".eggs",
     ".git",
     ".hg",
-    ".mypy_cache",
     ".nox",
     ".pants.d",
     ".pytype",
@@ -177,4 +177,100 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
     "from __future__ import annotations",  # Type checking import in export.py
+]
+
+[tool.pyright]
+# Pyright configuration for strict type checking
+include = ["src"]
+exclude = [
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/htmlcov",
+    "**/coverage.xml",
+    "**/tests",
+    "**/venv",
+    "**/.venv",
+    "**/node_modules",
+    "**/build",
+    "**/dist",
+]
+
+# Type checking mode
+typeCheckingMode = "strict"
+
+# Python version
+pythonVersion = "3.12"
+
+# Platform
+pythonPlatform = "All"
+
+# Additional search paths
+extraPaths = ["src"]
+
+# Report settings - strict type checking
+reportMissingImports = "error"
+reportMissingTypeStubs = "warning"
+reportUntypedFunctionDecorator = "error"
+reportUntypedClassDecorator = "error"
+reportUntypedBaseClass = "error"
+reportUntypedNamedTuple = "error"
+reportPrivateUsage = "error"
+reportConstantRedefinition = "error"
+reportIncompatibleMethodOverride = "error"
+reportIncompatibleVariableOverride = "error"
+reportInconsistentConstructor = "error"
+reportOverlappingOverload = "error"
+reportMissingSuperCall = "error"
+reportUninitializedInstanceVariable = "error"
+reportInvalidStringEscapeSequence = "error"
+reportUnknownParameterType = "error"
+reportUnknownArgumentType = "error"
+reportUnknownLambdaType = "error"
+reportUnknownVariableType = "error"
+reportUnknownMemberType = "error"
+reportMissingParameterType = "error"
+reportMissingTypeArgument = "error"
+reportInvalidTypeVarUse = "error"
+reportCallInDefaultInitializer = "error"
+reportUnnecessaryIsInstance = "error"
+reportUnnecessaryCast = "error"
+reportUnnecessaryComparison = "error"
+reportUnnecessaryContains = "error"
+reportAssertAlwaysTrue = "error"
+reportSelfClsParameterName = "error"
+reportImplicitStringConcatenation = "error"
+reportInvalidStubStatement = "error"
+reportIncompleteStub = "error"
+reportUnsupportedDunderAll = "error"
+reportUnusedCoroutine = "error"
+reportUnnecessaryTypeIgnoreComment = "error"
+reportMatchNotExhaustive = "error"
+reportShadowedImports = "error"
+
+# Warnings for unused code
+reportUnusedImport = "warning"
+reportUnusedClass = "warning"
+reportUnusedFunction = "warning"
+reportUnusedVariable = "warning"
+reportDuplicateImport = "warning"
+
+# Optional access warnings
+reportOptionalSubscript = "warning"
+reportOptionalMemberAccess = "warning"
+reportOptionalCall = "warning"
+reportOptionalIterable = "warning"
+reportOptionalContextManager = "warning"
+reportOptionalOperand = "warning"
+reportTypedDictNotRequiredAccess = "warning"
+reportPrivateImportUsage = "warning"
+reportTypeCommentUsage = "warning"
+
+# Strict dictionary settings
+strictDictionaryInference = true
+strictListInference = true
+strictSetInference = true
+
+# Execution environment
+executionEnvironments = [
+    { root = "src", pythonVersion = "3.12", pythonPlatform = "All" }
 ]

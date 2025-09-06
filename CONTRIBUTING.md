@@ -83,7 +83,7 @@ Prerequisites: Python 3.12.11+, Poetry.
    ```bash
    poetry run ruff check .
    poetry run ruff format .
-   poetry run mypy src/
+   poetry run pyright
    ```
 7. Full code quality pipeline:
    ```bash
@@ -95,7 +95,7 @@ Prerequisites: Python 3.12.11+, Poetry.
 Before opening a PR, ensure:
 
 - Code builds and runs locally
-- Ruff clean, mypy passing
+- Ruff clean, Pyright passing
 - Tests added/updated; coverage ≥95%
 - Docs updated (README, docstrings, CHANGELOG)
 - No breaking changes, or clearly documented with migration notes
@@ -106,7 +106,7 @@ Before opening a PR, ensure:
 
 - [ ] Follows project coding style and guidelines
 - [ ] Linting (Ruff) passes
-- [ ] Type checking (mypy) passes
+- [ ] Type checking (Pyright) passes
 - [ ] Tests pass locally with ≥95% coverage
 - [ ] Documentation updated
 - [ ] Breaking changes documented (if any)

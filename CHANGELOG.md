@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Migrated from mypy to Pyright for type checking
+- Updated CI/CD pipeline to use Pyright instead of mypy
+- Updated pre-commit hooks to include Pyright
+- Updated documentation to reflect Pyright usage
+
 ### Added
 - Initial project structure with Poetry dependency management
 - Multi-agent literature review system using AutoGen
 - Streamlit web interface for interactive literature reviews
 - arXiv integration for paper search and retrieval
-- Professional development setup with ruff, mypy, pytest
+- Professional development setup with ruff, Pyright, pytest
 - Pre-commit hooks for code quality enforcement
 - Comprehensive test coverage configuration (95% target)
 - CI/CD ready project structure
@@ -38,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python 3.12.11 runtime target
 - Poetry for dependency management
 - Ruff for linting and formatting (PEP 8 compliance)
-- mypy for strict type checking
+- Pyright for strict type checking
 - pytest with asyncio support for testing
 - Coverage reporting with HTML and XML outputs
 
