@@ -6,7 +6,10 @@ Enhanced with comprehensive error handling, retry mechanisms, and notifications.
 
 import asyncio
 from datetime import datetime
+from importlib import metadata
 import logging
+import os
+import subprocess
 
 import streamlit as st
 
@@ -27,6 +30,14 @@ from .export import (
 )
 from .logging import configure_logging, new_session_id, set_session_id
 from .orchestrator import run_survey_studio
+from .ui.components import (
+    empty_state as render_empty_state,
+    footer as render_footer,
+    header as render_header,
+    progress_steps,
+    sidebar_about,
+    sidebar_troubleshooting,
+)
 from .ui.toasts import (
     handle_exception_with_toast,
     show_error_panel,
@@ -67,7 +78,7 @@ def configure_page() -> None:
 def render_sidebar() -> tuple[str, int, str, dict]:
     """Render the sidebar with configuration options and validation."""
     st.sidebar.title("📚 Survey Studio")
-    st.sidebar.markdown("Configure your literature review")
+    st.sidebar.caption("Configure your literature review")
 
     # Topic input with inline validation
     query = st.sidebar.text_input(
@@ -108,27 +119,24 @@ def render_sidebar() -> tuple[str, int, str, dict]:
     # Advanced options
     advanced_options = render_advanced_options_sidebar()
 
+    # Informational sections
+    sidebar_about()
+    sidebar_troubleshooting()
+
     return query, n_papers, model, advanced_options
 
 
 def render_main_content(query: str, n_papers: int, model: str) -> None:
-    """Render the main content area."""
-    st.title("📚 Literature Review Assistant")
-    st.markdown(
-        """
-        Welcome to Survey Studio! This tool uses AI agents to conduct
-        comprehensive literature reviews by searching arXiv and generating
-        structured summaries.
-
-        **How it works:**
-        1. 🔍 **Search Agent** finds relevant papers on arXiv
-        2. 📝 **Summarizer Agent** creates a structured literature review
-        3. 📋 You get a comprehensive overview of the research landscape
-        """
+    """Render the main content area with header and guidance."""
+    render_header(
+        title="Survey Studio",
+        tagline=(
+            "Multi-agent literature review assistant for rigorous academic research"
+        ),
     )
 
     if not query:
-        st.info("👈 Please enter a research topic in the sidebar to get started.")
+        render_empty_state()
         return
 
     # Display current configuration
@@ -144,7 +152,9 @@ def render_main_content(query: str, n_papers: int, model: str) -> None:
 
 async def run_review_stream(query: str, n_papers: int, model: str) -> None:
     """Run the literature review and stream results."""
+    steps = ["Searching", "Summarizing"]
     chat_container = st.container()
+    step_placeholder = st.empty()
 
     # Initialize results storage
     if "results_frames" not in st.session_state:
@@ -153,6 +163,8 @@ async def run_review_stream(query: str, n_papers: int, model: str) -> None:
     # Clear previous results for new review
     st.session_state.results_frames = []
 
+    current_phase = None
+
     with chat_container:
         st.subheader("🤖 Agent Conversation")
 
@@ -160,19 +172,40 @@ async def run_review_stream(query: str, n_papers: int, model: str) -> None:
             role, *rest = frame.split(":", 1)
             content = rest[0].strip() if rest else ""
 
+            # Update progress step subtly
+            if role == "search_agent":
+                phase = "Searching"
+            elif role == "summarizer":
+                phase = "Summarizing"
+            else:
+                phase = current_phase or "Searching"
+
+            if phase != current_phase:
+                if current_phase is not None:
+                    st.divider()
+                current_phase = phase
+            with step_placeholder.container():
+                progress_steps(current_step=current_phase, steps=steps)
+
             # Store frame for export functionality
             st.session_state.results_frames.append(frame)
 
             # Display agent messages with different styling
             if role == "search_agent":
-                with st.chat_message("assistant", avatar="🔍"):
-                    st.markdown(f"**Search Agent**: {content}")
+                with st.chat_message("assistant", avatar="🔎"):
+                    st.markdown("**Search Agent**")
+                    st.write(content)
             elif role == "summarizer":
-                with st.chat_message("assistant", avatar="📝"):
-                    st.markdown(f"**Summarizer**: {content}")
+                with st.chat_message("assistant", avatar="🧠"):
+                    st.markdown("**Summarizer**")
+                    st.write(content)
             else:
                 with st.chat_message("assistant"):
-                    st.markdown(f"**{role}**: {content}")
+                    st.markdown(f"**{role}**")
+                    st.write(content)
+
+    # Mark completion for CTA visibility
+    st.session_state.run_completed = True
 
 
 # Constants
@@ -206,6 +239,22 @@ def main() -> None:
     ):
         _handle_review_execution(query, n_papers, model)
 
+    # Post-completion CTA in main area
+    if st.session_state.get("run_completed"):
+        st.success("Review complete.")
+        if st.button("Run Again", type="primary"):
+            st.session_state.results_frames = []
+            st.session_state.run_completed = False
+            st.rerun()
+
+    # Footer with version and commit SHA
+    try:
+        version = _get_app_version()
+    except Exception:
+        version = "unknown"
+    sha_short = _get_short_commit_sha()
+    render_footer(app_version=version, commit_sha_short=sha_short)
+
 
 def _initialize_session() -> None:
     """Initialize session state and logging."""
@@ -235,6 +284,43 @@ def _handle_review_execution(query: str, n_papers: int, model: str) -> None:
 
     # Handle download functionality
     _handle_download(query, n_papers, model)
+
+
+def _get_app_version() -> str:
+    """Return the application version from distribution or pyproject.toml."""
+    # Try installed distribution metadata first
+    try:
+        return metadata.version("survey-studio")
+    except Exception:
+        pass
+
+    # Fallback: parse pyproject.toml in repo
+    try:
+        import tomllib  # Python 3.11+
+
+        repo_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..")
+        )
+        pyproject_path = os.path.join(repo_root, "pyproject.toml")
+        with open(pyproject_path, "rb") as f:
+            data = tomllib.load(f)
+        return data.get("project", {}).get("version", "unknown")
+    except Exception:
+        return "unknown"
+
+
+def _get_short_commit_sha() -> str:
+    """Return the short commit SHA if available, else empty string."""
+    try:
+        return (
+            subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
+    except Exception:
+        return os.getenv("GIT_COMMIT_SHA_SHORT", "")
 
 
 def _execute_review(query: str, n_papers: int, model: str) -> None:
