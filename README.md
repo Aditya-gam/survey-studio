@@ -7,7 +7,6 @@ A multi-agent literature review assistant powered by AutoGen and Streamlit. Surv
 [![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://docs.astral.sh/ruff/)
 [![Pyright](https://img.shields.io/badge/type--checker-Pyright-blue)](https://github.com/microsoft/pyright)
 [![CI](https://github.com/Aditya-gam/survey-studio/workflows/CI/badge.svg)](https://github.com/Aditya-gam/survey-studio/actions)
-[![Coverage](https://codecov.io/gh/Aditya-gam/survey-studio/branch/main/graph/badge.svg)](https://codecov.io/gh/Aditya-gam/survey-studio)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](https://commitizen-tools.github.io/commitizen/)
 
@@ -19,7 +18,7 @@ A multi-agent literature review assistant powered by AutoGen and Streamlit. Surv
 - **Interactive Web Interface**: Clean, professional Streamlit UI with real-time conversation streaming
 - **arXiv Integration**: Direct access to the world's largest repository of academic papers
 - **Configurable**: Adjustable number of papers, AI models, and search parameters
-- **Professional Development Setup**: Full CI/CD pipeline with testing, linting, and type checking
+- **Professional Development Setup**: Full CI/CD pipeline with linting and type checking
 
 ## 🧭 Architecture
 
@@ -146,10 +145,6 @@ poetry run streamlit run streamlit_app.py --server.port 8502
    poetry run streamlit run streamlit_app.py --server.port 8501
    ```
 
-3. **Run tests:**
-   ```bash
-   poetry run pytest
-   ```
 
 4. **Run linting and formatting:**
    ```bash
@@ -182,7 +177,6 @@ The project enforces 100% compliance via Ruff, Pyright, detect-secrets, and comm
 
 Per-file ignores are configured to reduce noise:
 - `__init__.py`: ignore `F401` (re-export patterns)
-- `tests/**/*`: ignore `N806` (naming in tests)
 
 ### Secrets Scanning
 
@@ -193,7 +187,6 @@ Per-file ignores are configured to reduce noise:
   git add .secrets.baseline
   git commit -m "chore(security): update detect-secrets baseline"
   ```
-- Exclusions: test data and fixtures are excluded by default in the hook.
 
 ### Commit Messages (Conventional Commits)
 
@@ -241,15 +234,10 @@ brew install act
 # Run the CI workflow locally (uses default container runners)
 act -j lint
 act -j type
-act -j test
-
-# Pass Codecov token for local runs if needed
-CODECOV_TOKEN=your_token act -j test
 ```
 
 Common CI issues and resolutions:
 - Missing Poetry: ensure the workflow installs the pinned Poetry version.
-- Coverage below 95%: add or improve tests; check exclusions in `pyproject.toml`.
 - Pyright import errors: add stubs or dependencies under Pyright configuration in `pyproject.toml`.
 - **Secrets false positives**: update the baseline after verifying the match is benign.
 
@@ -267,7 +255,6 @@ survey-studio/
 │       ├── __init__.py          # Package initialization
 │       ├── app.py              # Streamlit frontend
 │       └── backend.py          # AutoGen multi-agent backend
-├── tests/                      # Test suite
 ├── .streamlit/
 │   └── config.toml            # Streamlit configuration
 ├── .github/
@@ -307,32 +294,10 @@ async def example():
 asyncio.run(example())
 ```
 
-## 🧪 Testing
-
-The project uses pytest with comprehensive test coverage:
-
-```bash
-# Run all tests with configured coverage and 95% threshold
-poetry run pytest
-
-# Generate coverage HTML locally (outputs to htmlcov/)
-poetry run pytest --cov-report=html
-
-# Run specific test file
-poetry run pytest tests/unit/test_tools.py
-```
-
-### Coverage Reporting
-
-- The project enforces a 95% coverage threshold via `pyproject.toml` (`--cov-fail-under=95`).
-- CI uploads coverage to Codecov. View the report on your repo’s Codecov page.
-- Local artifacts: `htmlcov/index.html` for an interactive report, `coverage.xml` for CI tools.
-
 ### CI/CD
 
-- GitHub Actions runs three jobs on push/PR: Lint (Ruff), Type (Pyright), Test (pytest+coverage).
-- Coverage is uploaded to Codecov, and the CI enforces the 95% threshold.
-- Badges: CI and Coverage appear at the top of this README.
+- GitHub Actions runs two jobs on push/PR: Lint (Ruff) and Type (Pyright).
+- Badges: CI appears at the top of this README.
 
 ## 📋 Configuration
 
@@ -346,17 +311,15 @@ The `.streamlit/config.toml` file contains UI theme and server settings.
 
 ### CI/Codecov Setup
 
-1. Add GitHub secret `CODECOV_TOKEN` with your repository token from Codecov.
-2. Install the Codecov GitHub App on the repository and enable status checks.
-3. Ensure required status checks include: `Lint (Ruff)`, `Type Check (Pyright)`, `Test (pytest + coverage)`, and `codecov/project`, `codecov/patch`.
-4. Branch protection: require pull request reviews, dismiss stale approvals on new commits, and enforce linear history (rebase merges).
+1. Ensure required status checks include: `Lint (Ruff)` and `Type Check (Pyright)`.
+2. Branch protection: require pull request reviews, dismiss stale approvals on new commits, and enforce linear history (rebase merges).
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/amazing-feature`
 3. Make your changes
-4. Run tests and linting: `poetry run pytest && poetry run ruff check .`
+4. Run linting: `poetry run ruff check .`
 5. Commit your changes: `git commit -m 'feat: add amazing feature'`
 6. Push to the branch: `git push origin feature/amazing-feature`
 7. Open a Pull Request (rebase merge strategy, no merge commits). See `CONTRIBUTING.md` for details.
@@ -370,7 +333,6 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 - `docs:` Documentation changes
 - `style:` Code formatting
 - `refactor:` Code refactoring
-- `test:` Test additions or updates
 - `chore:` Build process or tooling changes
 
 ## 📊 Technology Stack
@@ -379,7 +341,7 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 - **Frontend**: Streamlit (web interface)
 - **Data Source**: arXiv API
 - **AI Models**: OpenAI GPT (configurable)
-- **Development**: Poetry, Ruff, Pyright, pytest
+- **Development**: Poetry, Ruff, Pyright
 - **CI/CD**: Pre-commit hooks, GitHub Actions
 
 ## 📄 License

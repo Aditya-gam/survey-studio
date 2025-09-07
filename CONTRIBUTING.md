@@ -13,7 +13,7 @@ Thank you for your interest in contributing! This document outlines the standard
 
 - Branch protection and merging:
   - Rebase merge strategy only (no merge commits, keep linear history)
-  - Require CI to pass (lint, type, tests, coverage) before merge
+  - Require CI to pass (lint, type) before merge
   - At least one code review approval
   - Do not delete branches automatically after merge (maintainers may keep history)
 
@@ -29,7 +29,7 @@ Commit messages must follow the Conventional Commits specification:
 [optional footer(s)]
 ```
 
-Types include: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
+Types include: `feat`, `fix`, `docs`, `style`, `refactor`, `chore`.
 
 Examples:
 
@@ -37,7 +37,6 @@ Examples:
 - `fix(ui): handle empty search queries`
 - `docs: add architecture diagram`
 - `refactor: extract arxiv client`
-- `test: increase coverage for retry logic`
 - `chore: bump ruff to latest`
 
 Breaking changes:
@@ -75,10 +74,6 @@ Prerequisites: Python 3.12.11+, Poetry.
    ```bash
    poetry run streamlit run streamlit_app.py --server.port 8501
    ```
-5. Run tests (95%+ coverage required):
-   ```bash
-   poetry run pytest
-   ```
 6. Lint and type check:
    ```bash
    poetry run ruff check .
@@ -96,7 +91,6 @@ Before opening a PR, ensure:
 
 - Code builds and runs locally
 - Ruff clean, Pyright passing
-- Tests added/updated; coverage ≥95%
 - Docs updated (README, docstrings, CHANGELOG)
 - No breaking changes, or clearly documented with migration notes
 - Security considerations reviewed (no secrets committed, least-privilege tokens)
@@ -107,7 +101,6 @@ Before opening a PR, ensure:
 - [ ] Follows project coding style and guidelines
 - [ ] Linting (Ruff) passes
 - [ ] Type checking (Pyright) passes
-- [ ] Tests pass locally with ≥95% coverage
 - [ ] Documentation updated
 - [ ] Breaking changes documented (if any)
 - [ ] Security reviewed
