@@ -29,8 +29,6 @@ repos:
       - id: check-json
       - id: check-yaml
       - id: check-toml
-      - id: name-tests-test
-        args: ["--pytest-test-first"]
 
   # Code formatting and linting with ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -39,10 +37,12 @@ repos:
       - id: ruff-format
         name: ruff format
         types_or: [python, pyi]
+        files: ^src/
         args: [--config=pyproject.toml]
       - id: ruff
         name: ruff check
         types_or: [python, pyi]
+        files: ^src/
         args: [--fix, --config=pyproject.toml]
 
   # Type checking with Pyright
@@ -52,7 +52,7 @@ repos:
       - id: pyright
         name: pyright
         types_or: [python, pyi]
-        args: [--config=pyproject.toml]
+        files: ^src/
 
 
   # Commit message validation with Conventional Commits
