@@ -2280,4 +2280,4 @@ dev = ["detect-secrets", "pre-commit", "pyright", "ruff"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12.11"
-content-hash = "1389b6558d1624a59621de2188c01bf7353889aa69e13d5082b860fb1d224539"
+content-hash = "35c6e6a3435275c870eb8fd2870e702ed4d71750ffb738c443f986ec55165b1f"
