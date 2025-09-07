@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import arxiv
+import arxiv  # type: ignore
 from autogen_core.tools import FunctionTool
 
 from .errors import ArxivSearchError, ExternalServiceError
@@ -54,7 +54,7 @@ def arxiv_search(query: str, max_results: int = 5) -> list[dict[str, Any]]:
         if max_results <= 0 or max_results > MAX_ARXIV_RESULTS:
             raise ExternalServiceError(
                 f"Invalid max_results: {max_results}. "
-                f"Must be between 1 and {MAX_ARXIV_RESULTS}",
+                + f"Must be between 1 and {MAX_ARXIV_RESULTS}",
                 service="arXiv",
                 context={"query": query, "max_results": max_results},
             )

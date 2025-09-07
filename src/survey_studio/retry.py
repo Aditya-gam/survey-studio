@@ -78,39 +78,18 @@ def _should_retry_exception(exc: BaseException) -> bool:
         return True
 
     # For HTTP errors, only retry 5xx status codes
-    if hasattr(exc, "response") and hasattr(exc.response, "status_code"):
-        status_code = getattr(exc.response, "status_code", None)
-        if status_code is not None and isinstance(status_code, int):
-            return bool(
-                HTTP_STATUS_SERVER_ERROR_MIN
-                <= status_code
-                < HTTP_STATUS_SERVER_ERROR_MAX
-            )
+    if hasattr(exc, "response"):
+        response = getattr(exc, "response", None)
+        if response is not None and hasattr(response, "status_code"):
+            status_code = getattr(response, "status_code", None)
+            if status_code is not None and isinstance(status_code, int):
+                return bool(
+                    HTTP_STATUS_SERVER_ERROR_MIN
+                    <= status_code
+                    < HTTP_STATUS_SERVER_ERROR_MAX
+                )
 
     return False
-
-
-def _log_retry_attempt(retry_state: Any) -> None:
-    """Log retry attempts with structured information."""
-    log = with_context(logger, component="retry")
-
-    attempt_number = retry_state.attempt_number
-    if hasattr(retry_state, "outcome") and retry_state.outcome:
-        exception = retry_state.outcome.exception()
-        if exception:
-            log.warning(
-                f"Retry attempt {attempt_number} failed",
-                extra={
-                    "extra_fields": {
-                        "attempt": attempt_number,
-                        "exception_type": exception.__class__.__name__,
-                        "exception_message": str(exception),
-                        "operation": getattr(retry_state, "fn", {}).get(
-                            "__name__", "unknown"
-                        ),
-                    }
-                },
-            )
 
 
 def _update_circuit_breaker(service: str, success: bool) -> None:

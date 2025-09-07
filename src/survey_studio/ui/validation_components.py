@@ -178,7 +178,7 @@ def render_advanced_options_sidebar() -> dict[str, Any]:
             render_validation_helper(helper_text, state)
 
         # Validate and return processed values
-        advanced_options = {}
+        advanced_options: dict[str, Any] = {}
 
         if keywords_str.strip():
             try:

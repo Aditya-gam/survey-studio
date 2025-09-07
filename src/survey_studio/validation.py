@@ -27,7 +27,7 @@ def validate_topic(topic: str) -> str:
     if not validate_topic_characters(topic):
         raise ValidationError(
             "topic contains invalid characters; use only alphanumeric, spaces, "
-            "and common punctuation (.,!?-:;()[]\"')"
+            + "and common punctuation (.,!?-:;()[]\"')"
         )
     return sanitize_text(topic)
 
@@ -64,9 +64,9 @@ def sanitize_text(text: str) -> str:
     collapsed = " ".join(text.split())
 
     # Remove potentially dangerous characters while preserving readability
-    sanitized = []
+    sanitized: list[str] = []
     control_charachter_ord = 32  # noqa: N806
-    dangerous_chars = [  # noqa: N806
+    dangerous_chars: list[str] = [  # noqa: N806
         "<",
         ">",
         "&",
@@ -131,7 +131,7 @@ def validate_keywords(keywords_str: str) -> list[str]:
         ):
             raise ValidationError(
                 f"Invalid keyword '{keyword}'; use only alphanumeric characters, "
-                "spaces, hyphens, and underscores"
+                + "spaces, hyphens, and underscores"
             )
 
     return keywords

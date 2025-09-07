@@ -11,7 +11,7 @@ from contextvars import ContextVar
 import logging
 import re
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:  # TCH003: only import Mapping for typing
     from collections.abc import Mapping
@@ -24,7 +24,7 @@ SENSITIVE_PATTERNS = [
     (
         re.compile(
             r"(?i)(api[_-]?key|token|secret|password|passwd)\s*[:=]\s*"
-            r'["\']?([^"\'\s]+)'
+            + r'["\']?([^"\'\s]+)'
         ),
         r"\1=***REDACTED***",
     ),
@@ -63,7 +63,7 @@ def redact_sensitive_data(data: dict[str, Any]) -> dict[str, Any]:
     Removes or redacts API keys, tokens, passwords, and other sensitive information.
     Also truncates long values to prevent log pollution.
     """
-    redacted = {}
+    redacted: dict[str, Any] = {}
 
     for key, value in data.items():
         # Convert to string for processing
@@ -107,7 +107,9 @@ class KeyValueFormatter(logging.Formatter):
         # Merge any extra fields added via LoggerAdapter or `extra=...`
         extra_fields = record.__dict__.get("extra_fields")
         if isinstance(extra_fields, dict):
-            base.update(extra_fields)
+            # Cast to proper type for type safety
+            extra_fields_dict = cast(dict[str, Any], extra_fields)
+            base.update(extra_fields_dict)
 
         # Redact sensitive data before formatting
         base = redact_sensitive_data(base)

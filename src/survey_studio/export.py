@@ -6,12 +6,14 @@ with metadata, sanitization, and error handling for robust download operations.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 import html
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 from markdown_it import MarkdownIt
 
@@ -78,11 +80,16 @@ def _sanitize_topic_for_filename(topic: str) -> str:
 
 def _validate_export_inputs(topic: str, content_frames: Iterable[str]) -> None:
     """Validate inputs for export functions."""
-    if not isinstance(topic, str):
-        raise ValidationError("Topic must be a string", field="topic")
+    if not topic:
+        raise ValidationError("Topic must be a non-empty string", field="topic")
 
-    if not isinstance(content_frames, Iterable):
-        raise ValidationError("Content frames must be iterable", field="content_frames")
+    # Check if content_frames is iterable by trying to iterate it
+    try:
+        iter(content_frames)
+    except TypeError as err:
+        raise ValidationError(
+            "Content frames must be iterable", field="content_frames"
+        ) from err
 
 
 def _create_yaml_frontmatter(metadata: ExportMetadata) -> str:
@@ -121,10 +128,10 @@ def generate_filename(
         ExportError: If filename generation fails
     """
     try:
-        if not topic or not isinstance(topic, str):
+        if not topic:
             raise ValidationError("Topic must be a non-empty string", field="topic")
 
-        if not file_format or not isinstance(file_format, str):
+        if not file_format:
             raise ValidationError(
                 "File format must be a non-empty string", field="file_format"
             )
@@ -409,6 +416,9 @@ def to_html(
         ValidationError: If inputs are invalid
         ExportError: If HTML generation fails
     """
+    # Initialize content_list to avoid unbound variable issues
+    content_list: list[str] = []
+
     try:
         _validate_export_inputs(topic, generated_text_frames)
 

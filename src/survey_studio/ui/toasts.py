@@ -34,7 +34,8 @@ def _get_error_history() -> list[dict[str, Any]]:
         st.session_state[ERROR_HISTORY_KEY] = []
         return []
 
-    return history
+    # Type assertion to help Pyright understand the type
+    return history  # type: ignore[return-value]
 
 
 def _add_to_error_history(error_data: dict[str, Any]) -> None:
@@ -192,15 +193,16 @@ def show_error_panel(errors: list[dict[str, Any]] | None = None) -> None:
     st.caption(f"Showing {len(errors)} recent error(s)")
 
     # Create tabs for different error severities if we have severity info
-    severities = set()
+    severities: set[str] = set()
     for error in errors:
-        if "severity" in error:
+        if "severity" in error and isinstance(error["severity"], str):
             severities.add(error["severity"])
 
     if len(severities) > 1:
-        tabs = st.tabs(list(severities) + ["All"])
+        severity_list = list(severities)
+        tabs = st.tabs(severity_list + ["All"])
 
-        for i, severity in enumerate(severities):
+        for i, severity in enumerate(severity_list):
             with tabs[i]:
                 _render_error_list([e for e in errors if e.get("severity") == severity])
 

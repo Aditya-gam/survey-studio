@@ -10,6 +10,7 @@ from importlib import metadata
 import logging
 import os
 import subprocess
+from typing import Any
 
 import streamlit as st
 
@@ -75,7 +76,7 @@ def configure_page() -> None:
     )
 
 
-def render_sidebar() -> tuple[str, int, str, dict]:
+def render_sidebar() -> tuple[str, int, str, dict[str, Any]]:
     """Render the sidebar with configuration options and validation."""
     st.sidebar.title("📚 Survey Studio")
     st.sidebar.caption("Configure your literature review")
@@ -156,9 +157,12 @@ async def run_review_stream(query: str, n_papers: int, model: str) -> None:
     chat_container = st.container()
     step_placeholder = st.empty()
 
-    # Initialize results storage
+    # Initialize results storage with proper typing
     if "results_frames" not in st.session_state:
         st.session_state.results_frames = []
+
+    # Create a properly typed list
+    results_frames: list[str] = []
 
     # Clear previous results for new review
     st.session_state.results_frames = []
@@ -185,10 +189,11 @@ async def run_review_stream(query: str, n_papers: int, model: str) -> None:
                     st.divider()
                 current_phase = phase
             with step_placeholder.container():
-                progress_steps(current_step=current_phase, steps=steps)
+                progress_steps(current_step=current_phase or "Searching", steps=steps)
 
             # Store frame for export functionality
-            st.session_state.results_frames.append(frame)
+            results_frames.append(frame)
+            st.session_state.results_frames = results_frames
 
             # Display agent messages with different styling
             if role == "search_agent":
@@ -346,16 +351,16 @@ def _execute_review(query: str, n_papers: int, model: str) -> None:
             show_warning_toast(
                 "Configuration issue detected",
                 "Please check your API keys and model settings in the "
-                "environment variables",
+                + "environment variables",
             )
 
         except ExternalServiceError as ese:
             handle_exception_with_toast(ese, "external service")
             show_warning_toast(
-                f"Service temporarily unavailable: "
-                f"{ese.context.get('service', 'Unknown')}",
+                "Service temporarily unavailable: "
+                + f"{ese.context.get('service', 'Unknown')}",
                 "Please try again in a few moments. If the problem persists, "
-                "the service may be experiencing issues.",
+                + "the service may be experiencing issues.",
             )
 
         except LLMError as le:
@@ -363,7 +368,7 @@ def _execute_review(query: str, n_papers: int, model: str) -> None:
             show_warning_toast(
                 "AI model encountered an issue",
                 f"Model: {le.context.get('model', 'Unknown')}. This could be "
-                "due to rate limits or service issues.",
+                + "due to rate limits or service issues.",
             )
 
         except SurveyStudioError as se:
