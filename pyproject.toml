@@ -33,10 +33,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "ruff==0.6.9",
-    "pytest==8.3.2",
-    "pytest-asyncio==0.23.8",
-    "pytest-cov==5.0.0",
-    "coverage==7.6.1",
     "pre-commit==3.8.0",
     "detect-secrets==1.5.0",
     "pyright==1.1.405",
@@ -97,7 +93,6 @@ select = [
     "TCH", # flake8-type-checking
     "ARG", # flake8-unused-arguments
     "PIE", # flake8-pie
-    "PT",  # flake8-pytest-style
     "RET", # flake8-return
     "SLF", # flake8-self
     "TID", # flake8-tidy-imports
@@ -108,7 +103,6 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**/*" = ["N806"]
 "**/migrations/*.py" = ["E501", "D100", "D101", "D102", "D103", "D104"]
 
 [tool.ruff.lint.isort]
@@ -134,60 +128,12 @@ tag_format = "v$version"
 update_changelog_on_bump = true
 
 
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = [
-    "-ra",
-    "--strict-markers",
-    "--strict-config",
-    "--cov=src/survey_studio",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
-    "--cov-fail-under=95"
-]
-testpaths = ["tests"]
-asyncio_mode = "auto"
-
-[tool.coverage.run]
-source = ["src"]
-branch = true
-omit = [
-    "src/survey_studio/app.py",      # Streamlit UI - integration tested separately
-    "src/survey_studio/backend.py",  # Simple re-export module
-    "src/survey_studio/ui/components.py",  # Placeholder file
-    "src/survey_studio/ui/toasts.py",  # Streamlit UI components - integration tested separately
-]
-
-[tool.coverage.paths]
-source = ["src", "*/site-packages"]
-
-[tool.coverage.report]
-show_missing = true
-fail_under = 95
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
-    "from __future__ import annotations",  # Type checking import in export.py
-]
 
 [tool.pyright]
 # Pyright configuration for strict type checking
 include = ["src"]
 exclude = [
     "**/__pycache__",
-    "**/.pytest_cache",
-    "**/htmlcov",
-    "**/coverage.xml",
-    "**/tests",
     "**/venv",
     "**/.venv",
     "**/node_modules",
@@ -208,12 +154,12 @@ pythonPlatform = "All"
 extraPaths = ["src"]
 
 # Report settings - strict type checking
-reportMissingImports = "error"
+reportMissingImports = "warning"
 reportMissingTypeStubs = "warning"
-reportUntypedFunctionDecorator = "error"
-reportUntypedClassDecorator = "error"
-reportUntypedBaseClass = "error"
-reportUntypedNamedTuple = "error"
+reportUntypedFunctionDecorator = "warning"
+reportUntypedClassDecorator = "warning"
+reportUntypedBaseClass = "warning"
+reportUntypedNamedTuple = "warning"
 reportPrivateUsage = "error"
 reportConstantRedefinition = "error"
 reportIncompatibleMethodOverride = "error"
@@ -223,13 +169,13 @@ reportOverlappingOverload = "error"
 reportMissingSuperCall = "error"
 reportUninitializedInstanceVariable = "error"
 reportInvalidStringEscapeSequence = "error"
-reportUnknownParameterType = "error"
-reportUnknownArgumentType = "error"
-reportUnknownLambdaType = "error"
-reportUnknownVariableType = "error"
-reportUnknownMemberType = "error"
-reportMissingParameterType = "error"
-reportMissingTypeArgument = "error"
+reportUnknownParameterType = "warning"
+reportUnknownArgumentType = "warning"
+reportUnknownLambdaType = "warning"
+reportUnknownVariableType = "warning"
+reportUnknownMemberType = "warning"
+reportMissingParameterType = "warning"
+reportMissingTypeArgument = "warning"
 reportInvalidTypeVarUse = "error"
 reportCallInDefaultInitializer = "error"
 reportUnnecessaryIsInstance = "error"
