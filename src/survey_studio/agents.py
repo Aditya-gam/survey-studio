@@ -6,10 +6,10 @@ import logging
 
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.teams import RoundRobinGroupChat
-from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-from .config import get_openai_api_key
+from .config import get_best_available_provider
 from .errors import AgentCreationError, ConfigurationError, LLMError
+from .llm_factory import create_llm_client, get_provider_info
 from .logging import log_error_with_details, with_context
 from .retry import retry_llm_operations
 from .tools import arxiv_tool
@@ -20,8 +20,15 @@ logger.propagate = False
 
 
 @retry_llm_operations
-def make_llm_client(model: str, api_key: str) -> OpenAIChatCompletionClient:
-    """Create and return an OpenAI chat completion client with retry mechanisms.
+def make_llm_client(model: str | None = None, api_key: str | None = None):
+    """Create and return an LLM client with retry mechanisms.
+
+    Args:
+        model: The model name to use (optional, will use best available if not provided)
+        api_key: The API key (optional, will use best available if not provided)
+
+    Returns:
+        Configured LLM client
 
     Raises AgentCreationError if initialization fails. Includes automatic retries
     for transient failures and enhanced error reporting.
@@ -29,34 +36,43 @@ def make_llm_client(model: str, api_key: str) -> OpenAIChatCompletionClient:
     log = with_context(logger, component="agents", operation="make_llm_client")
 
     try:
-        # Validate inputs
-        if not model or not model.strip():
+        # Get the best available provider
+        provider_config = get_best_available_provider()
+        if provider_config is None:
             raise ConfigurationError(
-                "Model name cannot be empty", context={"provided_model": model}
+                "No AI providers are available. Please configure at least one API key.",
+                context={"available_providers": "none"},
             )
 
-        if not api_key or not api_key.strip():
-            raise ConfigurationError("API key cannot be empty", context={"model": model})
+        # Override model if provided
+        if model:
+            provider_config = provider_config._replace(model=model)
 
-        # Validate model name format
-        valid_models = [
-            "gpt-4o-mini",
-            "gpt-4o",
-            "gpt-3.5-turbo",
-            "gpt-4",
-            "gpt-4-turbo",
-        ]
-        if model not in valid_models:
-            log.warning(
-                f"Model '{model}' not in known valid models list",
-                extra={"extra_fields": {"model": model, "valid_models": valid_models}},
-            )
+        # Override API key if provided
+        if api_key:
+            provider_config = provider_config._replace(api_key=api_key)
 
-        log.info("Creating LLM client", extra={"extra_fields": {"model": model}})
+        log.info(
+            "Creating LLM client",
+            extra={
+                "extra_fields": {
+                    "provider": provider_config.provider.value,
+                    "model": provider_config.model,
+                }
+            },
+        )
 
-        client = OpenAIChatCompletionClient(model=model, api_key=api_key)
+        client = create_llm_client(provider_config)
 
-        log.info("LLM client created successfully", extra={"extra_fields": {"model": model}})
+        log.info(
+            "LLM client created successfully",
+            extra={
+                "extra_fields": {
+                    "provider": provider_config.provider.value,
+                    "model": provider_config.model,
+                }
+            },
+        )
 
         return client
 
@@ -64,43 +80,41 @@ def make_llm_client(model: str, api_key: str) -> OpenAIChatCompletionClient:
         # Re-raise configuration errors as-is
         raise
     except Exception as exc:  # noqa: BLE001
-        log_error_with_details(log.logger, exc, "make_llm_client", "agents", model=model)
+        log_error_with_details(log.logger, exc, "make_llm_client", "agents")
         raise AgentCreationError(
             f"Failed to create LLM client: {str(exc)}",
-            model=model,
+            model=model or "unknown",
             original_exception=exc,
-            context={"model": model},
+            context={"model": model, "provider": "auto"},
         ) from exc
 
 
-def build_team(model: str, api_key: str | None = None) -> RoundRobinGroupChat:
+def build_team(model: str | None = None, api_key: str | None = None) -> RoundRobinGroupChat:
     """Create and return the two-agent team configured for the review.
 
     Args:
-        model: The model name to use for the agents
-        api_key: The API key. If None, will attempt to get from environment
+        model: The model name to use for the agents (optional, will use best available)
+        api_key: The API key (optional, will use best available)
     """
 
     # Only include component; tests expect with_context called with just component
     log = with_context(logger, component="agents")
 
     try:
-        # Get API key from configuration sources if not provided
-        if api_key is None:
-            api_key = get_openai_api_key()
-            if not api_key:
-                raise ConfigurationError(
-                    (
-                        "OpenAI API key not found. Please set OPENAI_API_KEY in .env file, "
-                        "environment variables, or Streamlit secrets."
-                    ),
-                    context={"missing_config": "OPENAI_API_KEY", "model": model},
-                )
+        # Get provider info for logging
+        provider_info = get_provider_info()
 
         # Use debug for start message to keep single info call as expected by tests
         log.debug(
             "Building agent team",
-            extra={"extra_fields": {"model": model, "operation": "build_team"}},
+            extra={
+                "extra_fields": {
+                    "model": model or "auto",
+                    "operation": "build_team",
+                    "available_providers": provider_info["available_count"],
+                    "best_provider": provider_info["best_provider"],
+                }
+            },
         )
 
         # Create LLM client with retry mechanisms

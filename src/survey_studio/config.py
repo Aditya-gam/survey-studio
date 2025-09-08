@@ -6,7 +6,9 @@ Handles loading of secrets from multiple sources in priority order:
 3. Streamlit secrets (for hosted deployment)
 """
 
+from enum import Enum
 import os
+from typing import NamedTuple
 
 from dotenv import load_dotenv
 import streamlit as st
@@ -15,26 +17,87 @@ import streamlit as st
 load_dotenv()
 
 
-def get_openai_api_key() -> str | None:
-    """Get OpenAI API key from multiple sources in priority order.
+class AIProvider(Enum):
+    """AI providers supported by the application."""
+
+    TOGETHER_AI = "together_ai"
+    GEMINI = "gemini"
+    PERPLEXITY = "perplexity"
+    OPENAI = "openai"
+
+
+class ProviderConfig(NamedTuple):
+    """Configuration for an AI provider."""
+
+    provider: AIProvider
+    api_key: str | None
+    model: str
+    priority: int  # Lower number = higher priority
+    free_tier_rpm: int
+    free_tier_tpm: int
+
+
+# Provider configurations ordered by free tier availability (best to worst)
+PROVIDER_CONFIGS = {
+    AIProvider.TOGETHER_AI: ProviderConfig(
+        provider=AIProvider.TOGETHER_AI,
+        api_key=None,  # Will be loaded dynamically
+        model="meta-llama/Llama-3.1-8B-Instruct-Turbo",
+        priority=1,
+        free_tier_rpm=60,
+        free_tier_tpm=60000,
+    ),
+    AIProvider.GEMINI: ProviderConfig(
+        provider=AIProvider.GEMINI,
+        api_key=None,  # Will be loaded dynamically
+        model="gemini-2.0-flash-exp",
+        priority=2,
+        free_tier_rpm=5,
+        free_tier_tpm=250000,
+    ),
+    AIProvider.PERPLEXITY: ProviderConfig(
+        provider=AIProvider.PERPLEXITY,
+        api_key=None,  # Will be loaded dynamically
+        model="llama-3.1-sonar-large-128k-online",
+        priority=3,
+        free_tier_rpm=5,  # Pro tier has higher limits
+        free_tier_tpm=100000,
+    ),
+    AIProvider.OPENAI: ProviderConfig(
+        provider=AIProvider.OPENAI,
+        api_key=None,  # Will be loaded dynamically
+        model="gpt-4o-mini",
+        priority=4,
+        free_tier_rpm=3,
+        free_tier_tpm=40000,
+    ),
+}
+
+
+def _get_api_key(env_var: str, secret_key: str) -> str | None:
+    """Get API key from multiple sources in priority order.
 
     Priority order:
-    1. Environment variable OPENAI_API_KEY
+    1. Environment variable
     2. .env file (loaded by dotenv)
     3. Streamlit secrets (for hosted deployment)
+
+    Args:
+        env_var: Environment variable name
+        secret_key: Streamlit secret key name
 
     Returns:
         API key if found, None otherwise
     """
     # 1. Check environment variable (highest priority)
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv(env_var)
     if api_key and api_key.strip():
         return api_key.strip()
 
     # 2. Check Streamlit secrets (for hosted deployment)
     try:
-        if hasattr(st, "secrets") and "OPENAI_API_KEY" in st.secrets:
-            api_key = st.secrets["OPENAI_API_KEY"]
+        if hasattr(st, "secrets") and secret_key in st.secrets:
+            api_key = st.secrets[secret_key]
             if api_key and api_key.strip():
                 return api_key.strip()
     except Exception:
@@ -42,6 +105,69 @@ def get_openai_api_key() -> str | None:
         pass
 
     return None
+
+
+def get_openai_api_key() -> str | None:
+    """Get OpenAI API key from multiple sources in priority order."""
+    return _get_api_key("OPENAI_API_KEY", "OPENAI_API_KEY")
+
+
+def get_together_ai_api_key() -> str | None:
+    """Get Together AI API key from multiple sources in priority order."""
+    return _get_api_key("TOGETHER_AI_API_KEY", "TOGETHER_AI_API_KEY")
+
+
+def get_gemini_api_key() -> str | None:
+    """Get Gemini API key from multiple sources in priority order."""
+    return _get_api_key("GEMINI_API_KEY", "GEMINI_API_KEY")
+
+
+def get_perplexity_api_key() -> str | None:
+    """Get Perplexity API key from multiple sources in priority order."""
+    return _get_api_key("PERPLEXITY_API_KEY", "PERPLEXITY_API_KEY")
+
+
+def get_available_providers() -> list[ProviderConfig]:
+    """Get list of available AI providers with their API keys loaded.
+
+    Returns:
+        List of provider configurations with loaded API keys, ordered by priority
+    """
+    # Load API keys for all providers
+    api_key_loaders = {
+        AIProvider.TOGETHER_AI: get_together_ai_api_key,
+        AIProvider.GEMINI: get_gemini_api_key,
+        AIProvider.PERPLEXITY: get_perplexity_api_key,
+        AIProvider.OPENAI: get_openai_api_key,
+    }
+
+    available_providers: list[ProviderConfig] = []
+    for provider, config in PROVIDER_CONFIGS.items():
+        api_key = api_key_loaders[provider]()
+        if api_key:
+            # Create a new config with the loaded API key
+            updated_config = ProviderConfig(
+                provider=config.provider,
+                api_key=api_key,
+                model=config.model,
+                priority=config.priority,
+                free_tier_rpm=config.free_tier_rpm,
+                free_tier_tpm=config.free_tier_tpm,
+            )
+            available_providers.append(updated_config)
+
+    # Sort by priority (lower number = higher priority)
+    return sorted(available_providers, key=lambda x: x.priority)
+
+
+def get_best_available_provider() -> ProviderConfig | None:
+    """Get the best available AI provider based on free tier limits.
+
+    Returns:
+        Best available provider config, or None if no providers are available
+    """
+    available_providers = get_available_providers()
+    return available_providers[0] if available_providers else None
 
 
 def get_openai_model() -> str:

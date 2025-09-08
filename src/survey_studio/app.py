@@ -14,7 +14,6 @@ from typing import Any
 
 import streamlit as st
 
-from .config import get_openai_api_key
 from .errors import (
     ConfigurationError,
     ExportError,
@@ -109,14 +108,30 @@ def render_sidebar() -> tuple[str, int, str, dict[str, Any]]:
     helper_text, state = validate_papers_input(n_papers)
     render_validation_helper(helper_text, state)
 
-    # Model selection
+    # AI Provider and Model selection
+    from .llm_factory import get_provider_info
+
+    provider_info = get_provider_info()
+
+    if provider_info["available_count"] > 0:
+        st.sidebar.success(f"✅ {provider_info['available_count']} AI provider(s) available")
+        if provider_info["best_provider"]:
+            st.sidebar.info(f"🎯 Using: {provider_info['best_provider'].title()}")
+    else:
+        st.sidebar.error("❌ No AI providers configured")
+
+    # Model selection (optional override)
     model = st.sidebar.selectbox(
-        "AI Model",
-        options=["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"],
+        "AI Model (Optional Override)",
+        options=["Auto (Best Available)", "gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"],
         index=0,
-        help="Choose the AI model for the agents",
+        help="Choose to override the automatic provider selection",
         key="model_select",
     )
+
+    # Convert "Auto" selection to None
+    if model == "Auto (Best Available)":
+        model = None
 
     # Advanced options
     advanced_options = render_advanced_options_sidebar()
@@ -125,7 +140,7 @@ def render_sidebar() -> tuple[str, int, str, dict[str, Any]]:
     sidebar_about()
     sidebar_troubleshooting()
 
-    return query, n_papers, model, advanced_options
+    return query, n_papers, model or "auto", advanced_options
 
 
 def render_main_content(query: str, n_papers: int, model: str) -> None:
@@ -545,7 +560,7 @@ def _copy_to_clipboard(
         handle_exception_with_toast(exc, f"{format_type} clipboard preparation")
 
 
-def validate_inputs(query: str, n_papers: int, model: str) -> None:
+def validate_inputs(query: str, n_papers: int, model: str | None) -> None:
     """Validate user inputs and raise ValidationError if invalid."""
     if not query or not query.strip():
         raise ValidationError("Research topic cannot be empty", field="query")
@@ -562,17 +577,20 @@ def validate_inputs(query: str, n_papers: int, model: str) -> None:
             field="n_papers",
         )
 
-    if model not in ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"]:
+    if model and model not in ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"]:
         raise ValidationError(f"Invalid model selected: {model}", field="model")
 
-    # Check for API key configuration (basic check)
-    if not get_openai_api_key():
+    # Check for AI provider configuration
+    from .config import get_best_available_provider
+
+    if not get_best_available_provider():
         raise ConfigurationError(
             (
-                "OpenAI API key not configured. Please set OPENAI_API_KEY in .env file, "
-                "environment variables, or Streamlit secrets."
+                "No AI providers are available. Please configure at least one API key "
+                "(TOGETHER_AI_API_KEY, GEMINI_API_KEY, PERPLEXITY_API_KEY, or OPENAI_API_KEY) "
+                "in .env file, environment variables, or Streamlit secrets."
             ),
-            context={"missing_config": "OPENAI_API_KEY"},
+            context={"missing_config": "ai_providers"},
         )
 
 

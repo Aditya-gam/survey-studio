@@ -16,7 +16,6 @@ from .logging import configure_logging, new_session_id, set_session_id, with_con
 from .validation import (
     validate_model,
     validate_num_papers,
-    validate_openai_key,
     validate_topic,
 )
 
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 async def run_survey_studio(
     topic: str,
     num_papers: int = 5,
-    model: str = "gpt-4o-mini",
+    model: str | None = None,
     *,
     session_id: str | None = None,
 ) -> AsyncGenerator[str, None]:
@@ -47,10 +46,9 @@ async def run_survey_studio(
     try:
         clean_topic = validate_topic(topic)
         clean_n = validate_num_papers(num_papers)
-        clean_model = validate_model(model)
-        api_key = validate_openai_key()
+        clean_model = validate_model(model) if model else None
 
-        team = build_team(model=clean_model, api_key=api_key)
+        team = build_team(model=clean_model)
         task_prompt = (
             f"Conduct a literature review on **{clean_topic}** and return exactly "
             f"{clean_n} papers."
