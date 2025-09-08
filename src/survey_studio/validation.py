@@ -19,9 +19,7 @@ def validate_topic(topic: str) -> str:
     if not topic:
         raise ValidationError("topic must be a non-empty string")
     if len(topic) < MIN_TOPIC_LENGTH:
-        raise ValidationError(
-            f"topic must be at least {MIN_TOPIC_LENGTH} characters long"
-        )
+        raise ValidationError(f"topic must be at least {MIN_TOPIC_LENGTH} characters long")
     if len(topic) > MAX_TOPIC_LENGTH:
         raise ValidationError("topic is too long; please shorten to <= 200 chars")
     if not validate_topic_characters(topic):
@@ -36,9 +34,7 @@ def validate_num_papers(num_papers: int) -> int:
     if num_papers <= 0:
         raise ValidationError("num_papers must be a positive integer")
     if num_papers > MAX_NUM_PAPERS:
-        raise ValidationError(
-            f"num_papers too large; please choose <= {MAX_NUM_PAPERS}"
-        )
+        raise ValidationError(f"num_papers too large; please choose <= {MAX_NUM_PAPERS}")
     return num_papers
 
 
@@ -83,11 +79,7 @@ def sanitize_text(text: str) -> str:
 
     for ch in collapsed:
         # Allow printable characters but filter out dangerous ones
-        if (
-            ch.isprintable()
-            and ord(ch) >= control_charachter_ord
-            and ch not in dangerous_chars
-        ):
+        if ch.isprintable() and ord(ch) >= control_charachter_ord and ch not in dangerous_chars:
             sanitized.append(ch)
 
     return "".join(sanitized)
@@ -126,9 +118,7 @@ def validate_keywords(keywords_str: str) -> list[str]:
     # Validate each keyword format (allow spaces for multi-word keywords)
     for keyword in keywords:
         # Check for invalid characters explicitly
-        if any(char in keyword for char in "@#&!") or not re.match(
-            r"^[a-zA-Z0-9\s_-]+$", keyword
-        ):
+        if any(char in keyword for char in "@#&!") or not re.match(r"^[a-zA-Z0-9\s_-]+$", keyword):
             raise ValidationError(
                 f"Invalid keyword '{keyword}'; use only alphanumeric characters, "
                 + "spaces, hyphens, and underscores"

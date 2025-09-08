@@ -117,9 +117,9 @@ def validate_api_key_available() -> tuple[str, str]:
     Returns:
         Tuple of (status_text, validation_state)
     """
-    import os
+    from survey_studio.config import get_openai_api_key
 
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    api_key = get_openai_api_key()
     if not api_key:
         return "OpenAI API key not configured", "invalid"
 
@@ -187,8 +187,8 @@ def render_advanced_options_sidebar() -> dict[str, Any]:
                 advanced_options["keywords"] = []
 
         try:
-            advanced_options["start_year"], advanced_options["end_year"] = (
-                validate_year_range(start_year, end_year)
+            advanced_options["start_year"], advanced_options["end_year"] = validate_year_range(
+                start_year, end_year
             )
         except Exception:
             # Use defaults if validation fails

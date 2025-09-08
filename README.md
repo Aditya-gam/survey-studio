@@ -72,6 +72,15 @@ flowchart TD
    ```
 
 3. **Set up environment variables:**
+
+   **Option A: Using .env file (Recommended for local development):**
+   ```bash
+   # Copy the template and add your API key
+   cp .env.example .env
+   # Edit .env and add your actual OpenAI API key
+   ```
+
+   **Option B: Using environment variable:**
    ```bash
    export OPENAI_API_KEY="your-openai-api-key-here"
    ```
@@ -85,11 +94,20 @@ The application will open in your browser at `http://localhost:8501`.
 
 ### Secrets Management
 
-- Local: create `.streamlit/secrets.toml`
-  ```toml
-  OPENAI_API_KEY = "your-openai-api-key-here"
-  ```
-- In code, read via `st.secrets["OPENAI_API_KEY"]` or environment variable.
+The app supports multiple ways to configure your OpenAI API key:
+
+**For Local Development:**
+- **`.env` file (Recommended)**: Copy `.env.example` to `.env` and add your API key
+- **Environment variable**: Set `OPENAI_API_KEY` in your shell
+
+**For Production/Deployment:**
+- **Streamlit Community Cloud**: Use the Secrets tab in the app settings (see `.streamlit/secrets.toml` template)
+- **Other platforms**: Set the `OPENAI_API_KEY` environment variable
+
+The app automatically loads secrets in this priority order:
+1. Environment variables (highest priority)
+2. `.env` file (for local development)
+3. Streamlit secrets (for hosted deployment)
 
 ### Deploy to Streamlit Community Cloud
 

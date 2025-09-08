@@ -23,8 +23,7 @@ _session_id_var: ContextVar[str] = ContextVar("session_id", default="-")
 SENSITIVE_PATTERNS = [
     (
         re.compile(
-            r"(?i)(api[_-]?key|token|secret|password|passwd)\s*[:=]\s*"
-            + r'["\']?([^"\'\s]+)'
+            r"(?i)(api[_-]?key|token|secret|password|passwd)\s*[:=]\s*" + r'["\']?([^"\'\s]+)'
         ),
         r"\1=***REDACTED***",
     ),
@@ -95,9 +94,7 @@ class KeyValueFormatter(logging.Formatter):
         import time
 
         base: dict[str, Any] = {
-            "timestamp": time.strftime(
-                "%Y-%m-%d %H:%M:%S", time.localtime(record.created)
-            ),
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(record.created)),
             "level": record.levelname,
             "logger": record.name,
             "session_id": get_session_id(),
@@ -137,15 +134,11 @@ def configure_logging(level: int = logging.INFO) -> None:
     root.addHandler(handler)
 
 
-def with_context(
-    logger: logging.Logger, **fields: Any
-) -> logging.LoggerAdapter[logging.Logger]:
+def with_context(logger: logging.Logger, **fields: Any) -> logging.LoggerAdapter[logging.Logger]:
     """Return a LoggerAdapter that injects extra key=value fields."""
 
     class _Adapter(logging.LoggerAdapter[logging.Logger]):
-        def process(
-            self, msg: str, kwargs: Mapping[str, Any]
-        ) -> tuple[str, dict[str, Any]]:
+        def process(self, msg: str, kwargs: Mapping[str, Any]) -> tuple[str, dict[str, Any]]:
             extra: dict[str, Any] = dict(kwargs.get("extra", {}))
             current: dict[str, Any] = dict(extra.get("extra_fields", {}))
             merged: dict[str, Any] = {**current, **fields}

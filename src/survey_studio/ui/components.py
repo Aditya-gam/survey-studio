@@ -18,9 +18,7 @@ import streamlit as st
 def header(title: str = "Survey Studio", tagline: str | None = None) -> None:
     """Render the app header with title, tagline, and GitHub link."""
     if tagline is None:
-        tagline = (
-            "Multi-agent literature review assistant for rigorous academic research"
-        )
+        tagline = "Multi-agent literature review assistant for rigorous academic research"
 
     col1, col2 = st.columns([4, 1])
     with col1:

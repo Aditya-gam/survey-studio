@@ -132,9 +132,7 @@ def arxiv_search(query: str, max_results: int = 5) -> list[dict[str, Any]]:
         if not papers:
             log.warning(
                 "No papers found for query",
-                extra={
-                    "extra_fields": {"query": query[:100], "max_results": max_results}
-                },
+                extra={"extra_fields": {"query": query[:100], "max_results": max_results}},
             )
 
         return papers

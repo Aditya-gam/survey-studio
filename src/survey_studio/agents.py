@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import logging
-import os
 
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
+from .config import get_openai_api_key
 from .errors import AgentCreationError, ConfigurationError, LLMError
 from .logging import log_error_with_details, with_context
 from .retry import retry_llm_operations
@@ -36,9 +36,7 @@ def make_llm_client(model: str, api_key: str) -> OpenAIChatCompletionClient:
             )
 
         if not api_key or not api_key.strip():
-            raise ConfigurationError(
-                "API key cannot be empty", context={"model": model}
-            )
+            raise ConfigurationError("API key cannot be empty", context={"model": model})
 
         # Validate model name format
         valid_models = [
@@ -58,9 +56,7 @@ def make_llm_client(model: str, api_key: str) -> OpenAIChatCompletionClient:
 
         client = OpenAIChatCompletionClient(model=model, api_key=api_key)
 
-        log.info(
-            "LLM client created successfully", extra={"extra_fields": {"model": model}}
-        )
+        log.info("LLM client created successfully", extra={"extra_fields": {"model": model}})
 
         return client
 
@@ -68,9 +64,7 @@ def make_llm_client(model: str, api_key: str) -> OpenAIChatCompletionClient:
         # Re-raise configuration errors as-is
         raise
     except Exception as exc:  # noqa: BLE001
-        log_error_with_details(
-            log.logger, exc, "make_llm_client", "agents", model=model
-        )
+        log_error_with_details(log.logger, exc, "make_llm_client", "agents", model=model)
         raise AgentCreationError(
             f"Failed to create LLM client: {str(exc)}",
             model=model,
@@ -91,13 +85,16 @@ def build_team(model: str, api_key: str | None = None) -> RoundRobinGroupChat:
     log = with_context(logger, component="agents")
 
     try:
-        # Get API key from environment if not provided
+        # Get API key from configuration sources if not provided
         if api_key is None:
-            api_key = os.getenv("OPENAI_API_KEY")
+            api_key = get_openai_api_key()
             if not api_key:
                 raise ConfigurationError(
-                    "OpenAI API key not found in environment variables",
-                    context={"missing_env_var": "OPENAI_API_KEY", "model": model},
+                    (
+                        "OpenAI API key not found. Please set OPENAI_API_KEY in .env file, "
+                        "environment variables, or Streamlit secrets."
+                    ),
+                    context={"missing_config": "OPENAI_API_KEY", "model": model},
                 )
 
         # Use debug for start message to keep single info call as expected by tests

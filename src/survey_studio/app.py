@@ -14,6 +14,7 @@ from typing import Any
 
 import streamlit as st
 
+from .config import get_openai_api_key
 from .errors import (
     ConfigurationError,
     ExportError,
@@ -131,9 +132,7 @@ def render_main_content(query: str, n_papers: int, model: str) -> None:
     """Render the main content area with header and guidance."""
     render_header(
         title="Survey Studio",
-        tagline=(
-            "Multi-agent literature review assistant for rigorous academic research"
-        ),
+        tagline=("Multi-agent literature review assistant for rigorous academic research"),
     )
 
     if not query:
@@ -303,9 +302,7 @@ def _get_app_version() -> str:
     try:
         import tomllib  # Python 3.11+
 
-        repo_root = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "..")
-        )
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
         pyproject_path = os.path.join(repo_root, "pyproject.toml")
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
@@ -350,15 +347,13 @@ def _execute_review(query: str, n_papers: int, model: str) -> None:
             handle_exception_with_toast(ce, "configuration")
             show_warning_toast(
                 "Configuration issue detected",
-                "Please check your API keys and model settings in the "
-                + "environment variables",
+                "Please check your API keys and model settings in the " + "environment variables",
             )
 
         except ExternalServiceError as ese:
             handle_exception_with_toast(ese, "external service")
             show_warning_toast(
-                "Service temporarily unavailable: "
-                + f"{ese.context.get('service', 'Unknown')}",
+                "Service temporarily unavailable: " + f"{ese.context.get('service', 'Unknown')}",
                 "Please try again in a few moments. If the problem persists, "
                 + "the service may be experiencing issues.",
             )
@@ -447,9 +442,7 @@ def _handle_download(query: str, n_papers: int, model: str) -> None:
 
     # HTML export
     with col2:
-        if st.button(
-            "🌐 HTML", help="Download as HTML with styling", use_container_width=True
-        ):
+        if st.button("🌐 HTML", help="Download as HTML with styling", use_container_width=True):
             _export_format(query, results_frames, metadata, "html")
 
     # Copy to clipboard options
@@ -458,15 +451,11 @@ def _handle_download(query: str, n_papers: int, model: str) -> None:
     col3, col4 = st.sidebar.columns(2)
 
     with col3:
-        if st.button(
-            "📋 Copy MD", help="Copy Markdown to clipboard", use_container_width=True
-        ):
+        if st.button("📋 Copy MD", help="Copy Markdown to clipboard", use_container_width=True):
             _copy_to_clipboard(query, results_frames, metadata, "markdown")
 
     with col4:
-        if st.button(
-            "📋 Copy HTML", help="Copy HTML to clipboard", use_container_width=True
-        ):
+        if st.button("📋 Copy HTML", help="Copy HTML to clipboard", use_container_width=True):
             _copy_to_clipboard(query, results_frames, metadata, "html")
 
 
@@ -480,9 +469,7 @@ def _export_format(
 
             # Generate filename
             progress_bar.progress(20)
-            filename = generate_filename(
-                query, get_export_formats()[format_type]["extension"]
-            )
+            filename = generate_filename(query, get_export_formats()[format_type]["extension"])
 
             # Generate content based on format
             progress_bar.progress(50)
@@ -491,9 +478,7 @@ def _export_format(
             elif format_type == "html":
                 content = to_html(query, results_frames, metadata)
             else:
-                raise ExportError(
-                    f"Unsupported format: {format_type}", format_type=format_type
-                )
+                raise ExportError(f"Unsupported format: {format_type}", format_type=format_type)
 
             progress_bar.progress(80)
 
@@ -536,14 +521,10 @@ def _copy_to_clipboard(
             elif format_type == "html":
                 content = to_html(query, results_frames, metadata)
             else:
-                raise ExportError(
-                    f"Unsupported format: {format_type}", format_type=format_type
-                )
+                raise ExportError(f"Unsupported format: {format_type}", format_type=format_type)
 
             # Display content in expandable text area for manual copying
-            with st.expander(
-                f"📋 {format_type.upper()} Content (Click to copy)", expanded=True
-            ):
+            with st.expander(f"📋 {format_type.upper()} Content (Click to copy)", expanded=True):
                 st.text_area(
                     f"{format_type.upper()} Content",
                     value=content,
@@ -585,12 +566,13 @@ def validate_inputs(query: str, n_papers: int, model: str) -> None:
         raise ValidationError(f"Invalid model selected: {model}", field="model")
 
     # Check for API key configuration (basic check)
-    import os
-
-    if not os.getenv("OPENAI_API_KEY"):
+    if not get_openai_api_key():
         raise ConfigurationError(
-            "OpenAI API key not configured",
-            context={"missing_env_var": "OPENAI_API_KEY"},
+            (
+                "OpenAI API key not configured. Please set OPENAI_API_KEY in .env file, "
+                "environment variables, or Streamlit secrets."
+            ),
+            context={"missing_config": "OPENAI_API_KEY"},
         )
 
 

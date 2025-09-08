@@ -66,9 +66,7 @@ def _sanitize_topic_for_filename(topic: str) -> str:
     sanitized = sanitized.strip("_")
 
     # Limit length while preserving readability
-    if (
-        len(sanitized) > MAX_FILENAME_LENGTH - 30
-    ):  # Reserve space for timestamp and extension
+    if len(sanitized) > MAX_FILENAME_LENGTH - 30:  # Reserve space for timestamp and extension
         sanitized = sanitized[: MAX_FILENAME_LENGTH - 30]
         # Don't cut in the middle of a word - find last underscore
         last_underscore = sanitized.rfind("_")
@@ -87,9 +85,7 @@ def _validate_export_inputs(topic: str, content_frames: Iterable[str]) -> None:
     try:
         iter(content_frames)
     except TypeError as err:
-        raise ValidationError(
-            "Content frames must be iterable", field="content_frames"
-        ) from err
+        raise ValidationError("Content frames must be iterable", field="content_frames") from err
 
 
 def _create_yaml_frontmatter(metadata: ExportMetadata) -> str:
@@ -109,9 +105,7 @@ export_format: "markdown"
 
 
 @retry_export_operations
-def generate_filename(
-    topic: str, file_format: str, timestamp: datetime | None = None
-) -> str:
+def generate_filename(topic: str, file_format: str, timestamp: datetime | None = None) -> str:
     """Generate safe filename for export with timestamp.
 
     Args:
@@ -132,14 +126,10 @@ def generate_filename(
             raise ValidationError("Topic must be a non-empty string", field="topic")
 
         if not file_format:
-            raise ValidationError(
-                "File format must be a non-empty string", field="file_format"
-            )
+            raise ValidationError("File format must be a non-empty string", field="file_format")
 
         if file_format not in ["md", "html"]:
-            raise ValidationError(
-                "File format must be 'md' or 'html'", field="file_format"
-            )
+            raise ValidationError("File format must be 'md' or 'html'", field="file_format")
 
         # Use provided timestamp or current time
         if timestamp is None:
@@ -164,9 +154,7 @@ def generate_filename(
             # Minimum meaningful topic length
             if available_length > MIN_TRUNCATED_LENGTH:
                 sanitized_topic = sanitized_topic[:available_length]
-                filename = (
-                    f"survey_studio_{sanitized_topic}_{timestamp_str}.{file_format}"
-                )
+                filename = f"survey_studio_{sanitized_topic}_{timestamp_str}.{file_format}"
             else:
                 # Fallback if topic is too long
                 filename = f"survey_studio_{timestamp_str}.{file_format}"

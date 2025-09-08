@@ -84,9 +84,7 @@ def _should_retry_exception(exc: BaseException) -> bool:
             status_code = getattr(response, "status_code", None)
             if status_code is not None and isinstance(status_code, int):
                 return bool(
-                    HTTP_STATUS_SERVER_ERROR_MIN
-                    <= status_code
-                    < HTTP_STATUS_SERVER_ERROR_MAX
+                    HTTP_STATUS_SERVER_ERROR_MIN <= status_code < HTTP_STATUS_SERVER_ERROR_MAX
                 )
 
     return False
