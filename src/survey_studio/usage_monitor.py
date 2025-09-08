@@ -85,9 +85,7 @@ class UsageMonitor:
         try:
             if self.usage_file.exists():
                 with open(self.usage_file) as f:
-                    self.usage_records: list[UsageRecord] = [
-                        UsageRecord(**record) for record in json.load(f)
-                    ]
+                    self.usage_records = [UsageRecord(**record) for record in json.load(f)]
             else:
                 self.usage_records = []
         except Exception as exc:
