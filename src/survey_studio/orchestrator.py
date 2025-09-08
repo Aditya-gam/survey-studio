@@ -46,7 +46,8 @@ async def run_survey_studio(
     try:
         clean_topic = validate_topic(topic)
         clean_n = validate_num_papers(num_papers)
-        clean_model = validate_model(model) if model else None
+        # Handle "auto" model selection - don't validate it, just pass None to use best available
+        clean_model = validate_model(model) if model and model != "auto" else None
 
         team = build_team(model=clean_model)
         task_prompt = (

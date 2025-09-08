@@ -41,7 +41,6 @@ from .ui.components import (
 )
 from .ui.toasts import (
     handle_exception_with_toast,
-    show_error_panel,
     show_info_toast,
     show_success_toast,
     show_warning_toast,
@@ -154,15 +153,29 @@ def render_main_content(query: str, n_papers: int, model: str) -> None:
         render_empty_state()
         return
 
-    # Display current configuration
-    with st.expander("Current Configuration", expanded=False):
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Topic", query)
-        with col2:
-            st.metric("Papers", n_papers)
-        with col3:
-            st.metric("Model", model)
+    # Show a clean, minimal summary
+    st.markdown("### Ready to Start")
+
+    # Create a clean summary card
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        max_topic_display_length = 30
+        st.metric(
+            "Research Topic",
+            query[:max_topic_display_length] + "..."
+            if len(query) > max_topic_display_length
+            else query,
+        )
+
+    with col2:
+        st.metric("Papers to Review", n_papers)
+
+    with col3:
+        st.metric("AI Model", model.title())
+
+    st.markdown("---")
+    st.markdown("Click **🚀 Start Review** in the sidebar to begin your literature review.")
 
 
 async def run_review_stream(query: str, n_papers: int, model: str) -> None:
@@ -186,7 +199,11 @@ async def run_review_stream(query: str, n_papers: int, model: str) -> None:
     with chat_container:
         st.subheader("🤖 Agent Conversation")
 
-        async for frame in run_survey_studio(query, num_papers=n_papers, model=model):
+        # Convert "auto" to None for the orchestrator
+        model_for_orchestrator = None if model == "auto" else model
+        async for frame in run_survey_studio(
+            query, num_papers=n_papers, model=model_for_orchestrator
+        ):
             role, *rest = frame.split(":", 1)
             content = rest[0].strip() if rest else ""
 
@@ -239,15 +256,23 @@ def main() -> None:
     _initialize_session()
 
     configure_page()
-    show_error_panel()
-
     # Render sidebar and get configuration
     query, n_papers, model, advanced_options = render_sidebar()
-    render_main_content(query, n_papers, model)
 
-    # Validation status and button state management
-    all_valid = render_validation_status(query, n_papers, advanced_options)
-    button_disabled = not all_valid
+    # Validation status and button state management (in sidebar only)
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown("### 📋 Validation Status")
+        all_valid = render_validation_status(query, n_papers, advanced_options)
+        button_disabled = not all_valid
+
+        # Show clear status message
+        if all_valid:
+            st.success("✅ All inputs are valid - ready to start!")
+        else:
+            st.error("❌ Please fix the issues above before starting")
+
+    render_main_content(query, n_papers, model)
 
     # Handle search button and execution
     if st.sidebar.button(
@@ -577,7 +602,7 @@ def validate_inputs(query: str, n_papers: int, model: str | None) -> None:
             field="n_papers",
         )
 
-    if model and model not in ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"]:
+    if model and model not in ["auto", "gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"]:
         raise ValidationError(f"Invalid model selected: {model}", field="model")
 
     # Check for AI provider configuration

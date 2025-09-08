@@ -44,7 +44,7 @@ PROVIDER_CONFIGS = {
         provider=AIProvider.TOGETHER_AI,
         api_key=None,  # Will be loaded dynamically
         # Most cost-effective for general tasks
-        model="meta-llama/Llama-3.1-8B-Instruct-Turbo",
+        model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
         priority=1,
         free_tier_rpm=60,  # Generous free tier
         free_tier_tpm=60000,
@@ -52,7 +52,7 @@ PROVIDER_CONFIGS = {
     AIProvider.GEMINI: ProviderConfig(
         provider=AIProvider.GEMINI,
         api_key=None,  # Will be loaded dynamically
-        model="gemini-2.0-flash-exp",  # Fast and cost-effective for complex tasks
+        model="gemini-2.5-flash",  # Latest stable model with enhanced capabilities
         priority=2,
         free_tier_rpm=5,  # Limited but high-quality
         free_tier_tpm=250000,

@@ -32,13 +32,13 @@ def render_validation_helper(text: str, validation_state: str) -> None:
         validation_state: "valid", "invalid", or "warning"
     """
     if validation_state == "valid":
-        st.success(text, icon="✅")
+        st.success(f"✅ {text}")
     elif validation_state == "invalid":
-        st.error(text, icon="❌")
+        st.error(f"❌ {text}")
     elif validation_state == "warning":
-        st.warning(text, icon="⚠️")
+        st.warning(f"⚠️ {text}")
     else:
-        st.info(text, icon="ℹ️")
+        st.info(f"ℹ️ {text}")
 
 
 def validate_topic_input(topic: str) -> tuple[str, str]:
@@ -48,18 +48,21 @@ def validate_topic_input(topic: str) -> tuple[str, str]:
         Tuple of (helper_text, validation_state)
     """
     if not topic.strip():
-        return "Please enter a research topic", "warning"
+        return "Enter a research topic to get started", "warning"
 
     if len(topic.strip()) < MIN_TOPIC_LENGTH:
-        return f"Topic must be at least {MIN_TOPIC_LENGTH} characters long", "invalid"
+        return f"Topic too short - needs at least {MIN_TOPIC_LENGTH} characters", "invalid"
 
     if len(topic.strip()) > MAX_TOPIC_LENGTH:
-        return f"Topic is too long (max {MAX_TOPIC_LENGTH} characters)", "invalid"
+        return f"Topic too long - maximum {MAX_TOPIC_LENGTH} characters allowed", "invalid"
 
     if not validate_topic_characters(topic):
-        return "Use only alphanumeric, spaces, and common punctuation", "invalid"
+        return (
+            "Invalid characters - use letters, numbers, spaces, and common punctuation only",
+            "invalid",
+        )
 
-    return f"Valid topic ({len(topic)} characters)", "valid"
+    return f"Great topic! ({len(topic)} characters)", "valid"
 
 
 def validate_papers_input(num_papers: int) -> tuple[str, str]:
@@ -69,12 +72,12 @@ def validate_papers_input(num_papers: int) -> tuple[str, str]:
         Tuple of (helper_text, validation_state)
     """
     if num_papers < 1:
-        return "Number of papers must be at least 1", "invalid"
+        return "Must select at least 1 paper", "invalid"
 
     if num_papers > MAX_NUM_PAPERS:
         return f"Maximum {MAX_NUM_PAPERS} papers allowed", "invalid"
 
-    return f"Will search for {num_papers} papers", "valid"
+    return f"Perfect! Will search for {num_papers} papers", "valid"
 
 
 def validate_keywords_input(keywords_str: str) -> tuple[str, str]:
@@ -117,16 +120,27 @@ def validate_api_key_available() -> tuple[str, str]:
     Returns:
         Tuple of (status_text, validation_state)
     """
-    from survey_studio.config import get_openai_api_key
+    from survey_studio.config import get_best_available_provider
 
-    api_key = get_openai_api_key()
-    if not api_key:
-        return "OpenAI API key not configured", "invalid"
+    provider = get_best_available_provider()
+    if not provider:
+        return "No AI provider configured - add API key to continue", "invalid"
 
-    if not validate_api_key_format(api_key):
-        return "Invalid API key format", "invalid"
+    # Validate the API key format based on the provider
+    api_key = provider.api_key or ""
+    if provider.provider.value == "openai":
+        if not validate_api_key_format(api_key):
+            return "Invalid OpenAI API key format", "invalid"
+    elif provider.provider.value == "together_ai":
+        if not api_key.startswith("tgp_"):
+            return "Invalid Together AI API key format", "invalid"
+    elif provider.provider.value == "gemini":
+        if not api_key.startswith("AIza"):
+            return "Invalid Gemini API key format", "invalid"
+    elif provider.provider.value == "perplexity" and not api_key.startswith("pplx-"):
+        return "Invalid Perplexity API key format", "invalid"
 
-    return "API key configured", "valid"
+    return f"AI provider ready ({provider.provider.value.title()})", "valid"
 
 
 def render_advanced_options_sidebar() -> dict[str, Any]:

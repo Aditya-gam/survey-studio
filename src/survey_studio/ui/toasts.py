@@ -60,10 +60,9 @@ def show_success_toast(message: str, details: str | None = None) -> None:
     # Use Streamlit's built-in toast for success
     st.toast(f"✅ {message}", icon="✅")
 
-    # If details are provided, show them in a success box
+    # Only show details in expander if provided, no persistent success message
     if details:
-        st.success(f"**Success**: {message}")
-        with st.expander("Details", expanded=False):
+        with st.expander("📋 Success Details", expanded=False):
             st.write(details)
 
 
@@ -81,7 +80,7 @@ def show_error_toast(
         details: Optional technical details to show in an expander
         exception: Optional exception object for additional context
     """
-    # Show the toast notification
+    # Show the toast notification with more informative message
     st.toast(f"❌ {message}", icon="❌")
 
     # Add to error history
@@ -105,38 +104,51 @@ def show_error_toast(
 
     _add_to_error_history(error_data)
 
-    # Show detailed error information in the main area
-    st.error(f"**Error**: {message}")
+    # Only show toast, no persistent error messages on main page
+    # All error details and tips are in the expander below
 
-    # Create columns for error ID and technical details
-    col1, col2 = st.columns([1, 1])
+    # Show technical details and helpful tips in an expander
+    with st.expander("🔧 Error Details & Help", expanded=False):
+        # Show helpful context and next steps
+        if "validation" in message.lower() or "invalid" in message.lower():
+            st.info(
+                "💡 **Tip**: Check the sidebar for specific validation issues and fix them "
+                + "before trying again."
+            )
+        elif "api" in message.lower() or "key" in message.lower():
+            st.info(
+                "💡 **Tip**: Make sure you have configured at least one AI provider API key in "
+                + "your environment variables or .env file."
+            )
+        elif "network" in message.lower() or "connection" in message.lower():
+            st.info(
+                "💡 **Tip**: Check your internet connection and try again. The service may be "
+                + "temporarily unavailable."
+            )
+        elif "rate limit" in message.lower():
+            st.info(
+                "💡 **Tip**: You've hit a rate limit. Please wait a moment before trying again, or "
+                + "consider using a different AI provider."
+            )
 
-    with col1:
-        st.caption(f"Error ID: `{error_id}`")
-        st.caption(f"Session: `{get_session_id()}`")
+        if details:
+            st.markdown("**Technical Details:**")
+            st.code(details, language="text")
 
-    with col2:
-        st.caption(f"Time: {datetime.now().strftime('%H:%M:%S')}")
-
-    # Show technical details in an expander if available
-    if details or exception:
-        with st.expander("Technical Details", expanded=False):
-            if details:
-                st.code(details, language="text")
-
-            if exception and isinstance(exception, SurveyStudioError):
-                st.json(
-                    {
-                        "error_type": exception.__class__.__name__,
-                        "severity": exception.severity.value,
-                        "context": exception.context,
-                        "original_exception": (
-                            exception.original_exception.__class__.__name__
-                            if exception.original_exception
-                            else None
-                        ),
-                    }
-                )
+        if exception and isinstance(exception, SurveyStudioError):
+            st.markdown("**Error Information:**")
+            st.json(
+                {
+                    "error_type": exception.__class__.__name__,
+                    "severity": exception.severity.value,
+                    "context": exception.context,
+                    "original_exception": (
+                        exception.original_exception.__class__.__name__
+                        if exception.original_exception
+                        else None
+                    ),
+                }
+            )
 
 
 def show_warning_toast(message: str, details: str | None = None) -> None:
@@ -149,12 +161,9 @@ def show_warning_toast(message: str, details: str | None = None) -> None:
     # Use Streamlit's built-in toast for warnings
     st.toast(f"⚠️ {message}", icon="⚠️")
 
-    # Show warning in the main area
-    st.warning(f"**Warning**: {message}")
-
     # Show details if provided
     if details:
-        with st.expander("Warning Details", expanded=False):
+        with st.expander("📋 Warning Details", expanded=False):
             st.write(details)
 
 
@@ -168,12 +177,9 @@ def show_info_toast(message: str, details: str | None = None) -> None:
     # Use Streamlit's built-in toast for info
     st.toast(f"ℹ️ {message}", icon="ℹ️")
 
-    # Show info in the main area
-    st.info(f"**Info**: {message}")
-
     # Show details if provided
     if details:
-        with st.expander("Additional Information", expanded=False):
+        with st.expander("📋 Additional Information", expanded=False):
             st.write(details)
 
 
@@ -322,7 +328,8 @@ def show_retry_progress(attempt: int, max_attempts: int, service: str) -> None:
     """
     progress = attempt / max_attempts
 
-    st.info(f"🔄 Retrying {service} service... (Attempt {attempt}/{max_attempts})")
+    # Show retry progress as toast and progress bar only
+    st.toast(f"🔄 Retrying {service} service... (Attempt {attempt}/{max_attempts})", icon="🔄")
     st.progress(progress, text=f"Retry attempt {attempt} of {max_attempts}")
 
     if attempt == max_attempts:

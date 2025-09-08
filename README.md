@@ -138,7 +138,7 @@ Survey Studio supports multiple AI providers with intelligent fallback and cost 
 **Optional Model Overrides:**
 You can override the default models for each provider:
 - `TOGETHER_AI_MODEL` - e.g., `meta-llama/Llama-3.1-70B-Instruct-Turbo`
-- `GEMINI_MODEL` - e.g., `gemini-1.5-pro`
+- `GEMINI_MODEL` - e.g., `gemini-2.5-flash` or `gemini-1.5-pro`
 - `PERPLEXITY_MODEL` - e.g., `llama-3.1-sonar-huge-128k-online`
 - `OPENAI_MODEL` - e.g., `gpt-4o`
 

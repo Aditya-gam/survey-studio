@@ -166,6 +166,7 @@ class UsageMonitor:
                 "meta-llama/Llama-3.1-70B-Instruct-Turbo": {"input": 0.90, "output": 0.90},
             },
             AIProvider.GEMINI: {
+                "gemini-2.5-flash": {"input": 0.075, "output": 0.30},
                 "gemini-2.0-flash-exp": {"input": 0.075, "output": 0.30},
                 "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
                 "gemini-1.5-pro": {"input": 1.25, "output": 5.00},

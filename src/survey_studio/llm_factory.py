@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
+from autogen_core.models._model_client import ModelInfo
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from .config import AIProvider, get_available_providers, get_best_available_provider
@@ -60,23 +61,38 @@ def create_llm_client(provider_config: ProviderConfig | None = None) -> OpenAICh
         # We know api_key is not None at this point due to the check in get_available_providers
         assert provider_config.api_key is not None
 
+        # Generic model_info for non-OpenAI providers
+        generic_model_info = ModelInfo(
+            {
+                "vision": False,
+                "function_calling": True,
+                "json_output": True,
+                "family": "generic",
+                "structured_output": True,
+                "multiple_system_messages": True,
+            }
+        )
+
         if provider_config.provider == AIProvider.TOGETHER_AI:
             client = OpenAIChatCompletionClient(
                 model=provider_config.model,
                 api_key=provider_config.api_key,
                 base_url="https://api.together.xyz/v1",
+                model_info=generic_model_info,
             )
         elif provider_config.provider == AIProvider.GEMINI:
             client = OpenAIChatCompletionClient(
                 model=provider_config.model,
                 api_key=provider_config.api_key,
                 base_url="https://generativelanguage.googleapis.com/v1beta",
+                model_info=generic_model_info,
             )
         elif provider_config.provider == AIProvider.PERPLEXITY:
             client = OpenAIChatCompletionClient(
                 model=provider_config.model,
                 api_key=provider_config.api_key,
                 base_url="https://api.perplexity.ai",
+                model_info=generic_model_info,
             )
         else:  # OpenAI
             client = OpenAIChatCompletionClient(
