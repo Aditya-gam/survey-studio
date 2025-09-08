@@ -48,7 +48,7 @@ Documentation = "https://github.com/Aditya-gam/survey-studio/wiki"
 "Bug Reports" = "https://github.com/Aditya-gam/survey-studio/issues"
 
 [tool.poetry]
-packages = [{include = "survey_studio", from = "src"}]
+package-mode = false
 
 [build-system]
 requires = ["poetry-core"]
