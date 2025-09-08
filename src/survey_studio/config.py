@@ -37,28 +37,30 @@ class ProviderConfig(NamedTuple):
     free_tier_tpm: int
 
 
-# Provider configurations ordered by free tier availability (best to worst)
+# Provider configurations ordered by cost efficiency and reliability (best to worst)
+# Updated for 2025 with latest pricing and performance data
 PROVIDER_CONFIGS = {
     AIProvider.TOGETHER_AI: ProviderConfig(
         provider=AIProvider.TOGETHER_AI,
         api_key=None,  # Will be loaded dynamically
+        # Most cost-effective for general tasks
         model="meta-llama/Llama-3.1-8B-Instruct-Turbo",
         priority=1,
-        free_tier_rpm=60,
+        free_tier_rpm=60,  # Generous free tier
         free_tier_tpm=60000,
     ),
     AIProvider.GEMINI: ProviderConfig(
         provider=AIProvider.GEMINI,
         api_key=None,  # Will be loaded dynamically
-        model="gemini-2.0-flash-exp",
+        model="gemini-2.0-flash-exp",  # Fast and cost-effective for complex tasks
         priority=2,
-        free_tier_rpm=5,
+        free_tier_rpm=5,  # Limited but high-quality
         free_tier_tpm=250000,
     ),
     AIProvider.PERPLEXITY: ProviderConfig(
         provider=AIProvider.PERPLEXITY,
         api_key=None,  # Will be loaded dynamically
-        model="llama-3.1-sonar-large-128k-online",
+        model="llama-3.1-sonar-large-128k-online",  # Best for research with web access
         priority=3,
         free_tier_rpm=5,  # Pro tier has higher limits
         free_tier_tpm=100000,
@@ -66,9 +68,9 @@ PROVIDER_CONFIGS = {
     AIProvider.OPENAI: ProviderConfig(
         provider=AIProvider.OPENAI,
         api_key=None,  # Will be loaded dynamically
-        model="gpt-4o-mini",
+        model="gpt-4o-mini",  # Reliable fallback with good performance
         priority=4,
-        free_tier_rpm=3,
+        free_tier_rpm=3,  # Most limited free tier
         free_tier_tpm=40000,
     ),
 }
@@ -145,11 +147,14 @@ def get_available_providers() -> list[ProviderConfig]:
     for provider, config in PROVIDER_CONFIGS.items():
         api_key = api_key_loaders[provider]()
         if api_key:
-            # Create a new config with the loaded API key
+            # Get the model for this provider (with override support)
+            model = get_model_for_provider(provider)
+
+            # Create a new config with the loaded API key and model
             updated_config = ProviderConfig(
                 provider=config.provider,
                 api_key=api_key,
-                model=config.model,
+                model=model,
                 priority=config.priority,
                 free_tier_rpm=config.free_tier_rpm,
                 free_tier_tpm=config.free_tier_tpm,
@@ -170,27 +175,53 @@ def get_best_available_provider() -> ProviderConfig | None:
     return available_providers[0] if available_providers else None
 
 
+def get_model_for_provider(provider: AIProvider) -> str:
+    """Get model name for a specific provider from configuration sources.
+
+    Args:
+        provider: The AI provider to get model for
+
+    Returns:
+        Model name for the provider, using default if not overridden
+    """
+    # Map providers to their environment variable names
+    env_var_map = {
+        AIProvider.OPENAI: "OPENAI_MODEL",
+        AIProvider.TOGETHER_AI: "TOGETHER_AI_MODEL",
+        AIProvider.GEMINI: "GEMINI_MODEL",
+        AIProvider.PERPLEXITY: "PERPLEXITY_MODEL",
+    }
+
+    env_var = env_var_map.get(provider)
+    if not env_var:
+        # Fallback to default model for the provider
+        return PROVIDER_CONFIGS[provider].model
+
+    # Check environment variable first
+    model = os.getenv(env_var)
+    if model and model.strip():
+        return model.strip()
+
+    # Check Streamlit secrets
+    try:
+        if hasattr(st, "secrets") and env_var in st.secrets:
+            model = st.secrets[env_var]
+            if model and model.strip():
+                return model.strip()
+    except Exception:
+        pass
+
+    # Return default model for the provider
+    return PROVIDER_CONFIGS[provider].model
+
+
 def get_openai_model() -> str:
     """Get OpenAI model from configuration sources.
 
     Returns:
         Model name, defaults to 'gpt-4o-mini'
     """
-    # Check environment variable first
-    model = os.getenv("OPENAI_MODEL")
-    if model and model.strip():
-        return model.strip()
-
-    # Check Streamlit secrets
-    try:
-        if hasattr(st, "secrets") and "OPENAI_MODEL" in st.secrets:
-            model = st.secrets["OPENAI_MODEL"]
-            if model and model.strip():
-                return model.strip()
-    except Exception:
-        pass
-
-    return "gpt-4o-mini"
+    return get_model_for_provider(AIProvider.OPENAI)
 
 
 def get_max_papers() -> int:

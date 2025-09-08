@@ -9,7 +9,7 @@ from autogen_agentchat.teams import RoundRobinGroupChat
 
 from .config import get_best_available_provider
 from .errors import AgentCreationError, ConfigurationError, LLMError
-from .llm_factory import create_llm_client, get_provider_info
+from .llm_factory import create_llm_client, create_llm_client_with_fallback, get_provider_info
 from .logging import log_error_with_details, with_context
 from .retry import retry_llm_operations
 from .tools import arxiv_tool
@@ -20,12 +20,15 @@ logger.propagate = False
 
 
 @retry_llm_operations
-def make_llm_client(model: str | None = None, api_key: str | None = None):
+def make_llm_client(
+    model: str | None = None, api_key: str | None = None, use_fallback: bool = True
+):
     """Create and return an LLM client with retry mechanisms.
 
     Args:
         model: The model name to use (optional, will use best available if not provided)
         api_key: The API key (optional, will use best available if not provided)
+        use_fallback: Whether to use fallback mechanism if primary provider fails
 
     Returns:
         Configured LLM client
@@ -58,11 +61,16 @@ def make_llm_client(model: str | None = None, api_key: str | None = None):
                 "extra_fields": {
                     "provider": provider_config.provider.value,
                     "model": provider_config.model,
+                    "use_fallback": use_fallback,
                 }
             },
         )
 
-        client = create_llm_client(provider_config)
+        # Use fallback mechanism if requested
+        if use_fallback:
+            client = create_llm_client_with_fallback(provider_config)
+        else:
+            client = create_llm_client(provider_config)
 
         log.info(
             "LLM client created successfully",

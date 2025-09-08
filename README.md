@@ -15,6 +15,13 @@ A multi-agent literature review assistant powered by AutoGen and Streamlit. Surv
 - **Multi-Agent System**: Two specialized AI agents work together:
   - **Search Agent** 🔍: Crafts optimized arXiv queries and retrieves relevant papers
   - **Summarizer Agent** 📝: Generates structured literature reviews with key insights
+- **Multi-Provider AI Support**: Intelligent fallback across 4 AI providers:
+  - **Together AI** - Cost-effective with generous free tier
+  - **Google Gemini** - Fast and capable for complex analysis
+  - **Perplexity** - Research-focused with web access
+  - **OpenAI** - Reliable fallback with consistent performance
+- **Cost Optimization**: Automatic provider selection based on cost efficiency and availability
+- **Usage Monitoring**: Track API usage, costs, and performance across all providers
 - **Interactive Web Interface**: Clean, professional Streamlit UI with real-time conversation streaming
 - **arXiv Integration**: Direct access to the world's largest repository of academic papers
 - **Configurable**: Adjustable number of papers, AI models, and search parameters
@@ -32,17 +39,27 @@ flowchart TD
   subgraph Backend["Survey Studio Orchestrator"]
     Orchestrator["Orchestrator"] --> SearchAgent
     Orchestrator --> SummarizerAgent
+    LLMFactory["LLM Factory"] -->|"intelligent selection"| AIProviders
+  end
+
+  subgraph AIProviders["AI Providers"]
+    TogetherAI["Together AI<br/>(Primary)"]
+    Gemini["Google Gemini<br/>(Secondary)"]
+    Perplexity["Perplexity<br/>(Research)"]
+    OpenAI["OpenAI<br/>(Fallback)"]
   end
 
   SearchAgent["Search Agent"] -->|"queries"| ArXiv[("arXiv API")]
   SearchAgent -->|"returns papers"| Orchestrator
-  SummarizerAgent["Summarizer Agent"] -->|"LLM calls"| OpenAI[("OpenAI API")]
+  SummarizerAgent["Summarizer Agent"] -->|"LLM calls"| LLMFactory
+  LLMFactory -->|"fallback on failure"| AIProviders
   Orchestrator -->|"updates"| UI
 ```
 
 - **Streamlit UI**: Collects user input, renders agent conversation and results.
 - **Search Agent**: Generates and executes arXiv queries.
-- **Summarizer Agent**: Produces structured review using OpenAI models.
+- **Summarizer Agent**: Produces structured review using AI models.
+- **LLM Factory**: Intelligently selects and manages AI providers with fallback.
 - **Orchestrator**: Manages the multi-agent loop and data flow.
 
 ## 🖼 Screenshots & Media
@@ -92,22 +109,49 @@ flowchart TD
 
 The application will open in your browser at `http://localhost:8501`.
 
-### Secrets Management
+### AI Provider Configuration
 
-The app supports multiple ways to configure your OpenAI API key:
+Survey Studio supports multiple AI providers with intelligent fallback and cost optimization:
+
+**Supported Providers (in priority order):**
+1. **Together AI** - Best free tier, cost-effective for general tasks
+2. **Google Gemini** - Fast and capable for complex analysis
+3. **Perplexity** - Best for research with web access capabilities
+4. **OpenAI** - Reliable fallback with consistent performance
+
+**Configuration Options:**
 
 **For Local Development:**
-- **`.env` file (Recommended)**: Copy `.env.example` to `.env` and add your API key
-- **Environment variable**: Set `OPENAI_API_KEY` in your shell
+- **`.env` file (Recommended)**: Copy `.env.example` to `.env` and add your API keys
+- **Environment variables**: Set API keys in your shell
 
 **For Production/Deployment:**
-- **Streamlit Community Cloud**: Use the Secrets tab in the app settings (see `.streamlit/secrets.toml` template)
-- **Other platforms**: Set the `OPENAI_API_KEY` environment variable
+- **Streamlit Community Cloud**: Use the Secrets tab in the app settings
+- **Other platforms**: Set the API key environment variables
+
+**Required API Keys (at least one):**
+- `TOGETHER_AI_API_KEY` - Get from [Together AI](https://api.together.xyz/settings/api-keys)
+- `GEMINI_API_KEY` - Get from [Google AI Studio](https://aistudio.google.com/app/apikey)
+- `PERPLEXITY_API_KEY` - Get from [Perplexity](https://www.perplexity.ai/settings/api)
+- `OPENAI_API_KEY` - Get from [OpenAI Platform](https://platform.openai.com/api-keys)
+
+**Optional Model Overrides:**
+You can override the default models for each provider:
+- `TOGETHER_AI_MODEL` - e.g., `meta-llama/Llama-3.1-70B-Instruct-Turbo`
+- `GEMINI_MODEL` - e.g., `gemini-1.5-pro`
+- `PERPLEXITY_MODEL` - e.g., `llama-3.1-sonar-huge-128k-online`
+- `OPENAI_MODEL` - e.g., `gpt-4o`
 
 The app automatically loads secrets in this priority order:
 1. Environment variables (highest priority)
 2. `.env` file (for local development)
 3. Streamlit secrets (for hosted deployment)
+
+**Intelligent Fallback:**
+- Automatically selects the best available provider based on cost efficiency
+- Falls back to alternative providers if the primary one fails
+- Tracks usage and costs for all providers
+- Optimizes for both performance and cost-effectiveness
 
 ### Deploy to Streamlit Community Cloud
 
