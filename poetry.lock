@@ -95,34 +95,34 @@ tests-mypy = ["mypy (>=1.11.1) ; platform_python_implementation == \"CPython\" a
 
 [[package]]
 name = "autogen-agentchat"
-version = "0.4.9.3"
+version = "0.7.4"
 description = "AutoGen agents and teams library"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "autogen_agentchat-0.4.9.3-py3-none-any.whl", hash = "sha256:574956e65fad2029ec267ed143388c81f8fd308a06ca08773e63c2757ed9a1d1"},
-    {file = "autogen_agentchat-0.4.9.3.tar.gz", hash = "sha256:d101fa3d536df3aef845f6038ba77a1603e06fdd4e2547a89accc59128d5aaa1"},
+    {file = "autogen_agentchat-0.7.4-py3-none-any.whl", hash = "sha256:8f62bf2854fa06663d37576500c3ef92f291c61f1d0026a6d60c46fa55292dde"},
+    {file = "autogen_agentchat-0.7.4.tar.gz", hash = "sha256:9e9f0362c70d110479de351f8fc6afd497d9c926bd833f1bfafc118d993734c4"},
 ]
 
 [package.dependencies]
-autogen-core = "0.4.9.3"
+autogen-core = "0.7.4"
 
 [[package]]
 name = "autogen-core"
-version = "0.4.9.3"
+version = "0.7.4"
 description = "Foundational interfaces and agent runtime implementation for AutoGen"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "autogen_core-0.4.9.3-py3-none-any.whl", hash = "sha256:7e3680182bb968d2f63318dc1c3c427c964807aa6ad45e203924051a7a2333f8"},
-    {file = "autogen_core-0.4.9.3.tar.gz", hash = "sha256:a32d53f80d7aa00588d8c5ecf21b8e20fbbef3c4812d5e1862911ba24dc30d3f"},
+    {file = "autogen_core-0.7.4-py3-none-any.whl", hash = "sha256:b383d3b2dfe9f5d62e0da0057da6de3cb63259233570e4c85153e33703170afa"},
+    {file = "autogen_core-0.7.4.tar.gz", hash = "sha256:44b4574a378effbf52317e579ae1663602ce9bbb1c699100dec9f3cf19cc9e85"},
 ]
 
 [package.dependencies]
 jsonref = ">=1.1.0,<1.2.0"
-opentelemetry-api = ">=1.27.0"
+opentelemetry-api = ">=1.34.1"
 pillow = ">=11.0.0"
 protobuf = ">=5.29.3,<5.30.0"
 pydantic = ">=2.10.0,<3.0.0"
@@ -130,37 +130,43 @@ typing-extensions = ">=4.0.0"
 
 [[package]]
 name = "autogen-ext"
-version = "0.4.9.3"
+version = "0.7.4"
 description = "AutoGen extensions library"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "autogen_ext-0.4.9.3-py3-none-any.whl", hash = "sha256:ac3780ec584be71eedd884483fc1a7db0f60318c369d05d7603bb7d27fe25883"},
-    {file = "autogen_ext-0.4.9.3.tar.gz", hash = "sha256:c7bef82324ffb9e33b0f8c4cea783b24d1e48e7a9d852889ca5cc19e287500dc"},
+    {file = "autogen_ext-0.7.4-py3-none-any.whl", hash = "sha256:5afb47c8108168bce7b61eb476ed1bf025548f404da3742d322443fedad79e32"},
+    {file = "autogen_ext-0.7.4.tar.gz", hash = "sha256:1d69b37afa79787b43a401a10c857572d73b1d89e71950087543a81c8df02d27"},
 ]
 
 [package.dependencies]
-autogen-core = "0.4.9.3"
+autogen-core = "0.7.4"
 
 [package.extras]
-azure = ["azure-ai-inference (>=1.0.0b7)", "azure-core", "azure-identity"]
-chromadb = ["chromadb"]
+anthropic = ["anthropic (>=0.48)"]
+azure = ["azure-ai-inference (>=1.0.0b9)", "azure-ai-projects (>=1.0.0b11)", "azure-core", "azure-identity", "azure-search-documents (>=11.4.0)"]
+canvas = ["unidiff (>=0.7.5)"]
+chromadb = ["chromadb (>=1.0.0)"]
 diskcache = ["diskcache (>=5.6.3)"]
 docker = ["asyncio-atexit (>=1.0.1)", "docker (>=7.0,<8.0)"]
-file-surfer = ["autogen-agentchat (==0.4.9.3)", "markitdown (>=0.0.1,<0.1.0)"]
+docker-jupyter-executor = ["aiohttp (>=3.11.16)", "asyncio-atexit (>=1.0.1)", "docker (>=7.0,<8.0)", "requests (>=2.32.3)", "websockets (>=15.0.1)"]
+file-surfer = ["autogen-agentchat (==0.7.4)", "magika (>=0.6.1rc2)", "markitdown[all] (>=0.1.0a3,<0.2.0)"]
 gemini = ["google-genai (>=1.0.0)"]
-graphrag = ["graphrag (>=1.0.1)"]
+graphrag = ["graphrag (>=2.3.0)"]
 grpc = ["grpcio (>=1.70.0,<1.71.0)"]
 http-tool = ["httpx (>=0.27.0)", "json-schema-to-pydantic (>=0.2.0)"]
 jupyter-executor = ["ipykernel (>=6.29.5)", "nbclient (>=0.10.2)"]
 langchain = ["langchain-core (>=0.3.3,<0.4.0)"]
 llama-cpp = ["llama-cpp-python (>=0.3.8)"]
-magentic-one = ["autogen-agentchat (==0.4.9.3)", "markitdown (>=0.0.1,<0.1.0)", "pillow (>=11.0.0)", "playwright (>=1.48.0)"]
-mcp = ["json-schema-to-pydantic (>=0.2.2)", "mcp (>=1.5.0)"]
+magentic-one = ["autogen-agentchat (==0.7.4)", "magika (>=0.6.1rc2)", "markitdown[all] (>=0.1.0a3,<0.2.0)", "pillow (>=11.0.0)", "playwright (>=1.48.0)"]
+mcp = ["mcp (>=1.11.0)"]
+mem0 = ["mem0ai (>=0.1.98)"]
+mem0-local = ["chromadb (>=1.0.0)", "mem0ai (>=0.1.98)", "neo4j (>=5.25.0)"]
 ollama = ["ollama (>=0.4.7)", "tiktoken (>=0.8.0)"]
-openai = ["aiofiles", "openai (>=1.52.2)", "tiktoken (>=0.8.0)"]
+openai = ["aiofiles", "openai (>=1.93)", "tiktoken (>=0.8.0)"]
 redis = ["redis (>=5.2.1)"]
+redisvl = ["redisvl (>=0.6.0)"]
 rich = ["rich (>=13.9.4)"]
 semantic-kernel-all = ["semantic-kernel[anthropic,aws,dapr,google,hugging-face,mistralai,ollama,onnx,pandas,usearch] (>=1.17.1)"]
 semantic-kernel-anthropic = ["semantic-kernel[anthropic] (>=1.17.1)"]
@@ -173,9 +179,9 @@ semantic-kernel-mistralai = ["semantic-kernel[mistralai] (>=1.17.1)"]
 semantic-kernel-ollama = ["semantic-kernel[ollama] (>=1.17.1)"]
 semantic-kernel-onnx = ["semantic-kernel[onnx] (>=1.17.1)"]
 semantic-kernel-pandas = ["semantic-kernel[pandas] (>=1.17.1)"]
-task-centric-memory = ["chromadb (>=0.6.3)"]
-video-surfer = ["autogen-agentchat (==0.4.9.3)", "ffmpeg-python", "openai-whisper", "opencv-python (>=4.5)"]
-web-surfer = ["autogen-agentchat (==0.4.9.3)", "markitdown (>=0.0.1,<0.1.0)", "pillow (>=11.0.0)", "playwright (>=1.48.0)"]
+task-centric-memory = ["chromadb (>=1.0.0)"]
+video-surfer = ["autogen-agentchat (==0.7.4)", "ffmpeg-python", "openai-whisper", "opencv-python (>=4.5)"]
+web-surfer = ["autogen-agentchat (==0.7.4)", "magika (>=0.6.1rc2)", "markitdown[all] (>=0.1.0a3,<0.2.0)", "pillow (>=11.0.0)", "playwright (>=1.48.0)"]
 
 [[package]]
 name = "blinker"
@@ -512,15 +518,15 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "identify"
-version = "2.6.13"
+version = "2.6.14"
 description = "File identification library for Python"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"dev\""
 files = [
-    {file = "identify-2.6.13-py2.py3-none-any.whl", hash = "sha256:60381139b3ae39447482ecc406944190f690d4a2997f2584062089848361b33b"},
-    {file = "identify-2.6.13.tar.gz", hash = "sha256:da8d6c828e773620e13bfa86ea601c5a5310ba4bcd65edf378198b56a1f9fb32"},
+    {file = "identify-2.6.14-py2.py3-none-any.whl", hash = "sha256:11a073da82212c6646b1f39bb20d4483bfb9543bd5566fec60053c4bb309bf2e"},
+    {file = "identify-2.6.14.tar.gz", hash = "sha256:663494103b4f717cb26921c52f8751363dc89db64364cd836a9bf1535f53cd6a"},
 ]
 
 [package.extras]
@@ -706,14 +712,14 @@ format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-
 
 [[package]]
 name = "jsonschema-specifications"
-version = "2025.4.1"
+version = "2025.9.1"
 description = "The JSON Schema meta-schemas and vocabularies, exposed as a Registry"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "jsonschema_specifications-2025.4.1-py3-none-any.whl", hash = "sha256:4653bffbd6584f7de83a67e0d620ef16900b390ddc7939d56684d6c81e33f1af"},
-    {file = "jsonschema_specifications-2025.4.1.tar.gz", hash = "sha256:630159c9f4dbea161a6a2205c3011cc4f18ff381b189fff48bb39b9bf26ae608"},
+    {file = "jsonschema_specifications-2025.9.1-py3-none-any.whl", hash = "sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe"},
+    {file = "jsonschema_specifications-2025.9.1.tar.gz", hash = "sha256:b540987f239e745613c7a9176f3edb72b832a4ac465cf02712288397832b5e8d"},
 ]
 
 [package.dependencies]
@@ -828,14 +834,14 @@ files = [
 
 [[package]]
 name = "narwhals"
-version = "2.3.0"
+version = "2.4.0"
 description = "Extremely lightweight compatibility layer between dataframe libraries"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "narwhals-2.3.0-py3-none-any.whl", hash = "sha256:5507b1a9a9c2b1c55a627fdf6cf722fef2e23498bd14362a332c8848a311c321"},
-    {file = "narwhals-2.3.0.tar.gz", hash = "sha256:b66bc4ab7b6746354f60c4b3941e3ce60c066588c35360e2dc6c063489000a16"},
+    {file = "narwhals-2.4.0-py3-none-any.whl", hash = "sha256:06d958b03e3e3725ae16feee6737b4970991bb52e8465ef75f388c574732ac59"},
+    {file = "narwhals-2.4.0.tar.gz", hash = "sha256:a71931f7fb3c8e082cbe18ef0740644d87d60eba841ddfa9ba9394de1d43062f"},
 ]
 
 [package.extras]
@@ -2013,14 +2019,14 @@ sql = ["SQLAlchemy (>=2.0.0)"]
 
 [[package]]
 name = "tenacity"
-version = "8.5.0"
+version = "9.1.2"
 description = "Retry code until it succeeds"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "tenacity-8.5.0-py3-none-any.whl", hash = "sha256:b594c2a5945830c267ce6b79a166228323ed52718f30302c1359836112346687"},
-    {file = "tenacity-8.5.0.tar.gz", hash = "sha256:8bc6c0c8a09b31e6cad13c47afbed1a567518250a9a171418582ed8d9c20ca78"},
+    {file = "tenacity-9.1.2-py3-none-any.whl", hash = "sha256:f77bf36710d8b73a50b2dd155c97b870017ad21afe6ab300326b0371b3b05138"},
+    {file = "tenacity-9.1.2.tar.gz", hash = "sha256:1169d376c297e7de388d18b4481760d478b0e99a777cad3a9c86e556f4b697cb"},
 ]
 
 [package.extras]
