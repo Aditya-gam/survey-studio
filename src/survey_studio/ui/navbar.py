@@ -132,7 +132,9 @@ def render_desktop_form_elements() -> None:
         label="Research Topic",
         placeholder="e.g., transformer architectures, quantum computing",
         value=st.session_state.navbar_topic,
-        onChange=lambda e: setattr(st.session_state, "navbar_topic", e.target.value),
+        onChange=lambda e: setattr(  # type: ignore
+            st.session_state, "navbar_topic", e.target.value
+        ),
         disabled=is_loading,
         variant="outlined",
         size="small",
@@ -184,7 +186,9 @@ def render_desktop_form_elements() -> None:
     # Model Selection
     mui.Select(
         value=st.session_state.navbar_model,
-        onChange=lambda e: setattr(st.session_state, "navbar_model", e.target.value),
+        onChange=lambda e: setattr(  # type: ignore
+            st.session_state, "navbar_model", e.target.value
+        ),
         disabled=is_loading,
         size="small",
         variant="outlined",
@@ -298,7 +302,9 @@ def render_left_drawer(on_search_click: Callable[[], None] | None = None) -> Non
             label="Research Topic",
             placeholder="Enter research topic",
             value=st.session_state.navbar_topic,
-            onChange=lambda e: setattr(st.session_state, "navbar_topic", e.target.value),
+            onChange=lambda e: setattr(  # type: ignore
+                st.session_state, "navbar_topic", e.target.value
+            ),
             disabled=is_loading,
             fullWidth=True,
             variant="outlined",
@@ -309,7 +315,9 @@ def render_left_drawer(on_search_click: Callable[[], None] | None = None) -> Non
         # Papers Selection (Mobile - as Select instead of Slider)
         mui.Select(
             value=st.session_state.navbar_papers,
-            onChange=lambda e: setattr(st.session_state, "navbar_papers", e.target.value),
+            onChange=lambda e: setattr(  # type: ignore
+                st.session_state, "navbar_papers", e.target.value
+            ),
             disabled=is_loading,
             fullWidth=True,
             variant="outlined",
@@ -326,7 +334,9 @@ def render_left_drawer(on_search_click: Callable[[], None] | None = None) -> Non
         # Model Selection (Mobile)
         mui.Select(
             value=st.session_state.navbar_model,
-            onChange=lambda e: setattr(st.session_state, "navbar_model", e.target.value),
+            onChange=lambda e: setattr(  # type: ignore
+                st.session_state, "navbar_model", e.target.value
+            ),
             disabled=is_loading,
             fullWidth=True,
             variant="outlined",
@@ -524,7 +534,7 @@ def render_navbar(on_search_click: Callable[[], None] | None = None) -> None:
     if navbar_elements is None:
         return
 
-    with navbar_elements:
+    with navbar_elements:  # type: ignore
         # Main AppBar
         with mui.AppBar(sx=styles["appbar"]):  # noqa: SIM117
             with mui.Toolbar(sx=styles["toolbar"]):
@@ -579,7 +589,7 @@ def render_mobile_overlays() -> None:
     if mobile_elements is None:
         return
 
-    with mobile_elements:
+    with mobile_elements:  # type: ignore
         render_left_drawer()
         render_right_drawer()
 
