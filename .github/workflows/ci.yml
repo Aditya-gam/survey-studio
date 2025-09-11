@@ -125,4 +125,6 @@ jobs:
 
       - name: Run Pyright
         run: |
+          # Pyright is configured to treat warnings as non-fatal
+          # Only errors will cause the CI to fail
           poetry run pyright
