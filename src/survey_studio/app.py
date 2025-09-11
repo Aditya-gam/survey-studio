@@ -34,10 +34,16 @@ from .orchestrator import run_survey_studio
 from .ui.components import (
     empty_state as render_empty_state,
     footer as render_footer,
-    header as render_header,
     progress_steps,
     sidebar_about,
     sidebar_troubleshooting,
+)
+from .ui.navbar import (
+    get_navbar_form_values,
+    manage_loading_states,
+    render_navbar,
+    set_navbar_form_values,
+    validate_navbar_inputs,
 )
 from .ui.toasts import (
     handle_exception_with_toast,
@@ -47,10 +53,6 @@ from .ui.toasts import (
 )
 from .ui.validation_components import (
     render_advanced_options_sidebar,
-    render_validation_helper,
-    render_validation_status,
-    validate_papers_input,
-    validate_topic_input,
 )
 
 
@@ -60,7 +62,7 @@ def configure_page() -> None:
         page_title="Survey Studio - Literature Review Assistant",
         page_icon="📚",
         layout="wide",
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="collapsed",  # Collapsed since we use navbar now
         menu_items={
             "Get Help": "https://github.com/Aditya-gam/survey-studio",
             "Report a bug": "https://github.com/Aditya-gam/survey-studio/issues",
@@ -74,40 +76,43 @@ def configure_page() -> None:
         },
     )
 
+    # Add custom CSS for navbar integration
+    st.markdown(
+        """
+        <style>
+        /* Hide default Streamlit header and adjust main content area */
+        .stApp > header {
+            height: 0px;
+        }
 
-def render_sidebar() -> tuple[str, int, str, dict[str, Any]]:
-    """Render the sidebar with configuration options and validation."""
-    st.sidebar.title("📚 Survey Studio")
-    st.sidebar.caption("Configure your literature review")
+        .main .block-container {
+            padding-top: 80px;  /* Account for fixed navbar */
+            max-width: 100%;
+        }
 
-    # Topic input with inline validation
-    query = st.sidebar.text_input(
-        "Research topic",
-        placeholder="e.g., transformer architectures, quantum computing",
-        help="Enter the research topic you want to review (3-200 characters)",
-        key="topic_input",
+        /* Ensure sidebar doesn't overlap with navbar */
+        .sidebar .sidebar-content {
+            margin-top: 64px;
+        }
+
+        /* Fix for mobile responsiveness */
+        @media (max-width: 768px) {
+            .main .block-container {
+                padding-top: 70px;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
 
-    # Show topic validation feedback
-    if query:
-        helper_text, state = validate_topic_input(query)
-        render_validation_helper(helper_text, state)
 
-    # Number of papers slider with validation
-    n_papers = st.sidebar.slider(
-        "Number of papers",
-        min_value=1,
-        max_value=10,
-        value=5,
-        help="Select how many papers to include in the review (1-10)",
-        key="papers_slider",
-    )
+def render_sidebar() -> dict[str, Any]:
+    """Render the simplified sidebar with advanced options only."""
+    st.sidebar.title("⚙️ Advanced Options")
+    st.sidebar.caption("Additional configuration and information")
 
-    # Show papers validation feedback
-    helper_text, state = validate_papers_input(n_papers)
-    render_validation_helper(helper_text, state)
-
-    # AI Provider and Model selection
+    # AI Provider and Model selection info
     from .llm_factory import get_provider_info
 
     provider_info = get_provider_info()
@@ -119,36 +124,22 @@ def render_sidebar() -> tuple[str, int, str, dict[str, Any]]:
     else:
         st.sidebar.error("❌ No AI providers configured")
 
-    # Model selection (optional override)
-    model = st.sidebar.selectbox(
-        "AI Model (Optional Override)",
-        options=["Auto (Best Available)", "gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"],
-        index=0,
-        help="Choose to override the automatic provider selection",
-        key="model_select",
-    )
-
-    # Convert "Auto" selection to None
-    if model == "Auto (Best Available)":
-        model = None
-
     # Advanced options
     advanced_options = render_advanced_options_sidebar()
+
+    # Export functionality (moved to sidebar)
+    _handle_download_sidebar()
 
     # Informational sections
     sidebar_about()
     sidebar_troubleshooting()
 
-    return query, n_papers, model or "auto", advanced_options
+    return advanced_options
 
 
 def render_main_content(query: str, n_papers: int, model: str) -> None:
-    """Render the main content area with header and guidance."""
-    render_header(
-        title="Survey Studio",
-        tagline=("Multi-agent literature review assistant for rigorous academic research"),
-    )
-
+    """Render the main content area with guidance."""
+    # Main content now starts below the fixed navbar
     if not query:
         render_empty_state()
         return
@@ -175,7 +166,7 @@ def render_main_content(query: str, n_papers: int, model: str) -> None:
         st.metric("AI Model", model.title())
 
     st.markdown("---")
-    st.markdown("Click **🚀 Start Review** in the sidebar to begin your literature review.")
+    st.markdown("Use the **Search** button in the navbar to begin your literature review.")
 
 
 async def run_review_stream(query: str, n_papers: int, model: str) -> None:
@@ -256,40 +247,58 @@ def main() -> None:
     _initialize_session()
 
     configure_page()
-    # Render sidebar and get configuration
-    query, n_papers, model, advanced_options = render_sidebar()
 
-    # Validation status and button state management (in sidebar only)
-    with st.sidebar:
-        st.markdown("---")
-        st.markdown("### 📋 Validation Status")
-        all_valid = render_validation_status(query, n_papers, advanced_options)
-        button_disabled = not all_valid
+    # Define search handler function
+    def handle_navbar_search() -> None:
+        """Handle search button click from navbar."""
+        query, n_papers, model = get_navbar_form_values()
 
-        # Show clear status message
-        if all_valid:
-            st.success("✅ All inputs are valid - ready to start!")
-        else:
-            st.error("❌ Please fix the issues above before starting")
+        # Validate inputs using navbar validation
+        is_valid, errors = validate_navbar_inputs()
 
+        if not is_valid:
+            for error in errors:
+                show_warning_toast(error)
+            return
+
+        # Set loading state
+        manage_loading_states(True)
+
+        try:
+            _handle_review_execution(query, n_papers, model)
+        finally:
+            manage_loading_states(False)
+
+    # Render navbar with search handler
+    render_navbar(on_search_click=handle_navbar_search)
+
+    # Get current form values from navbar
+    query, n_papers, model = get_navbar_form_values()
+
+    # Render simplified sidebar
+    render_sidebar()
+
+    # Render main content
     render_main_content(query, n_papers, model)
-
-    # Handle search button and execution
-    if st.sidebar.button(
-        "🚀 Start Review",
-        type="primary",
-        disabled=button_disabled,
-        help="Start the literature review (requires valid inputs and API key)",
-    ):
-        _handle_review_execution(query, n_papers, model)
 
     # Post-completion CTA in main area
     if st.session_state.get("run_completed"):
         st.success("Review complete.")
-        if st.button("Run Again", type="primary"):
-            st.session_state.results_frames = []
-            st.session_state.run_completed = False
-            st.rerun()
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔄 Run Again", type="primary", use_container_width=True):
+                # Reset form values
+                set_navbar_form_values("", 5, "auto")
+                st.session_state.results_frames = []
+                st.session_state.run_completed = False
+                st.rerun()
+        with col2:
+            if st.button("📋 New Topic", type="secondary", use_container_width=True):
+                # Clear only the topic
+                set_navbar_form_values("", n_papers, model)
+                st.session_state.results_frames = []
+                st.session_state.run_completed = False
+                st.rerun()
 
     # Footer with version and commit SHA
     try:
@@ -432,6 +441,19 @@ def _run_review_with_fallback(query: str, n_papers: int, model: str) -> None:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(run_review_stream(query, n_papers, model))
+
+
+def _handle_download_sidebar() -> None:
+    """Handle enhanced export functionality in the sidebar."""
+    # Get stored results from session state
+    results_frames = st.session_state.get("results_frames", [])
+
+    if not results_frames:
+        return
+
+    # Get current form values for metadata
+    query, n_papers, model = get_navbar_form_values()
+    _handle_download(query, n_papers, model)
 
 
 def _handle_download(query: str, n_papers: int, model: str) -> None:

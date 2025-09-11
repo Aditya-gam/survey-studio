@@ -2387,6 +2387,21 @@ snowflake = ["snowflake-connector-python (>=3.3.0) ; python_version < \"3.12\"",
 sql = ["SQLAlchemy (>=2.0.0)"]
 
 [[package]]
+name = "streamlit-elements"
+version = "0.1.0"
+description = "React Components for Streamlit."
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "streamlit-elements-0.1.0.tar.gz", hash = "sha256:5f9f116f22df3ce4a8636b1dee7c2fd3dc3cb0c66267fd28c3e0314aa1d303a7"},
+    {file = "streamlit_elements-0.1.0-py3-none-any.whl", hash = "sha256:593c4b88c399c55879aa76f7f42970f30106f66acaa4baada6338ae5571790df"},
+]
+
+[package.dependencies]
+streamlit = ">=1.4.0"
+
+[[package]]
 name = "tenacity"
 version = "9.1.2"
 description = "Retry code until it succeeds"
@@ -2666,4 +2681,4 @@ dev = ["detect-secrets", "pre-commit", "pyright", "ruff"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12.11"
-content-hash = "63898ed6513b9feb2f549e259483ec539623d888483ceca798389fd3bb7a66f6"
+content-hash = "e3dc676f97ca72a042a9be4c33953c4be24d035c54dda14cb0ec734222f5381b"

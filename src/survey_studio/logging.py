@@ -105,7 +105,7 @@ class KeyValueFormatter(logging.Formatter):
         extra_fields = record.__dict__.get("extra_fields")
         if isinstance(extra_fields, dict):
             # Cast to proper type for type safety
-            extra_fields_dict = cast(dict[str, Any], extra_fields)
+            extra_fields_dict = cast("dict[str, Any]", extra_fields)
             base.update(extra_fields_dict)
 
         # Redact sensitive data before formatting

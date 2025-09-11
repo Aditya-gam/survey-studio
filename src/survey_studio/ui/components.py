@@ -83,7 +83,7 @@ def progress_steps(current_step: str, steps: Iterable[str]) -> None:
 
 def empty_state() -> None:
     """Render an engaging empty state with guidance and examples."""
-    st.info("👈 Enter a research topic in the sidebar to get started.", icon="🧭")
+    st.info("📝 Enter a research topic in the navbar above to get started.", icon="🧭")
     with st.expander("Examples", expanded=False):
         st.markdown(
             """
@@ -101,13 +101,102 @@ def footer(app_version: str, commit_sha_short: str | None = None) -> None:
     st.markdown(
         f"""
         <hr/>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+        <div style="
+            display: flex; gap: 1rem; flex-wrap: wrap;
+            align-items: center; margin-top: 3rem;
+        ">
           <span>Version: <code>{app_version}</code></span>
           <span>Commit: <code>{sha_display}</code></span>
           <a href="https://github.com/Aditya-gam/survey-studio/blob/main/CHANGELOG.md"
              target="_blank">Changelog</a>
           <span style="margin-left: auto;">© 2025 Survey Studio · MIT License</span>
         </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def navbar_spacer() -> None:
+    """Render a spacer to account for fixed navbar positioning."""
+    st.markdown(
+        """
+        <div style="height: 64px; margin-bottom: 20px;"></div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# Constants for status indicator
+MAX_TOPIC_DISPLAY_LENGTH = 30
+
+
+def navbar_status_indicator(topic: str, papers: int, model: str, is_valid: bool) -> None:
+    """Render a status indicator for the navbar form validation."""
+    if not topic:
+        return
+
+    status_color = "green" if is_valid else "red"
+    status_icon = "✅" if is_valid else "❌"
+
+    st.markdown(
+        f"""
+        <div style="
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border-left: 3px solid {status_color};
+            font-size: 0.8rem;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        ">
+            {status_icon} Topic: {topic[:MAX_TOPIC_DISPLAY_LENGTH]}{
+            "..." if len(topic) > MAX_TOPIC_DISPLAY_LENGTH else ""
+        } |
+            Papers: {papers} | Model: {model}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def mobile_search_fab(on_click_js: str = "") -> None:
+    """Render a floating action button for mobile search."""
+    st.markdown(
+        f"""
+        <div id="mobile-search-fab" style="
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: #1976d2;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+        " onclick="{on_click_js}">
+            <span style="color: white; font-size: 24px;">🔍</span>
+        </div>
+
+        <script>
+        function toggleMobileFab() {{
+            const fab = document.getElementById('mobile-search-fab');
+            if (window.innerWidth <= 768) {{
+                fab.style.display = 'flex';
+            }} else {{
+                fab.style.display = 'none';
+            }}
+        }}
+
+        window.addEventListener('resize', toggleMobileFab);
+        toggleMobileFab();
+        </script>
         """,
         unsafe_allow_html=True,
     )

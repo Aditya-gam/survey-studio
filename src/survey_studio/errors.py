@@ -136,7 +136,7 @@ class ExportError(SurveyStudioError):
         super().__init__(
             message,
             user_message=(
-                "Export failed. Please try again or contact support if the " "problem persists."
+                "Export failed. Please try again or contact support if the problem persists."
             ),
             severity=ErrorSeverity.WARNING,
             context=context,
@@ -187,7 +187,7 @@ def get_user_friendly_message(error: Exception) -> str:
     # Map common Python exceptions to user-friendly messages
     error_messages = {
         ConnectionError: (
-            "Network connection failed. Please check your internet connection " "and try again."
+            "Network connection failed. Please check your internet connection and try again."
         ),
         TimeoutError: "Request timed out. Please try again in a few moments.",
         KeyError: "Missing required data. Please check your configuration.",
@@ -201,8 +201,7 @@ def get_user_friendly_message(error: Exception) -> str:
             return message
 
     return (
-        "An unexpected error occurred. Please try again or contact support "
-        "if the problem persists."
+        "An unexpected error occurred. Please try again or contact support if the problem persists."
     )
 
 

@@ -51,8 +51,7 @@ async def run_survey_studio(
 
         team = build_team(model=clean_model)
         task_prompt = (
-            f"Conduct a literature review on **{clean_topic}** and return exactly "
-            f"{clean_n} papers."
+            f"Conduct a literature review on **{clean_topic}** and return exactly {clean_n} papers."
         )
 
         log.info("run_stream.start", extra={"extra_fields": {"model": clean_model}})
