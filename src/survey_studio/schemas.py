@@ -14,6 +14,7 @@ RESEARCH_TOPIC_DESC = "Research topic"
 NUM_PAPERS_DESC = "Number of papers reviewed"
 AI_MODEL_DESC = "AI model used"
 SESSION_ID_DESC = "Session identifier"
+REVIEW_RESULTS_DESC = "Review result frames"
 
 
 class InfoResponse(BaseModel):
@@ -81,7 +82,7 @@ class ReviewResponse(BaseModel):
     """Response model for successful review."""
 
     status: str = Field(..., description="Review status")
-    results: list[str] = Field(..., description="Review result frames")
+    results: list[str] = Field(..., description=REVIEW_RESULTS_DESC)
 
 
 # Additional models for future endpoints
@@ -122,12 +123,12 @@ class ExportResponse(BaseModel):
 class ReviewResults(BaseModel):
     """Model for literature review results."""
 
-    session_id: str = Field(..., description="Session identifier")
-    topic: str = Field(..., description="Research topic")
-    num_papers: int = Field(..., description="Number of papers reviewed")
-    model: str = Field(..., description="AI model used")
+    session_id: str = Field(..., description=SESSION_ID_DESC)
+    topic: str = Field(..., description=RESEARCH_TOPIC_DESC)
+    num_papers: int = Field(..., description=NUM_PAPERS_DESC)
+    model: str = Field(..., description=AI_MODEL_DESC)
     status: str = Field(..., description="Review status")
-    results: list[str] = Field(..., description="Review result frames")
+    results: list[str] = Field(..., description=REVIEW_RESULTS_DESC)
     total_frames: int = Field(..., description="Total number of result frames")
     generated_at: str = Field(..., description="Results generation timestamp")
 
@@ -138,7 +139,7 @@ class ReviewResults(BaseModel):
 class ReviewRequest(BaseModel):
     """Request model for literature review."""
 
-    topic: str = Field(..., min_length=1, max_length=500, description="Research topic")
+    topic: str = Field(..., min_length=1, max_length=500, description=RESEARCH_TOPIC_DESC)
     num_papers: int = Field(..., ge=1, le=50, description="Number of papers to review")
     model: str = Field(..., description="AI model to use or 'auto' for automatic selection")
 
@@ -146,7 +147,7 @@ class ReviewRequest(BaseModel):
 class ReviewValidateRequest(BaseModel):
     """Request model for review validation."""
 
-    topic: str = Field(..., min_length=1, max_length=500, description="Research topic")
+    topic: str = Field(..., min_length=1, max_length=500, description=RESEARCH_TOPIC_DESC)
     num_papers: int = Field(..., ge=1, le=50, description="Number of papers to review")
     model: str = Field(..., description="AI model to use or 'auto' for automatic selection")
 
@@ -154,11 +155,11 @@ class ReviewValidateRequest(BaseModel):
 class ExportRequest(BaseModel):
     """Request model for export generation."""
 
-    topic: str = Field(..., description="Research topic")
-    results_frames: list[str] = Field(..., description="Review result frames")
-    num_papers: int = Field(..., description="Number of papers reviewed")
-    model: str = Field(..., description="AI model used")
-    session_id: str = Field(..., description="Session identifier")
+    topic: str = Field(..., description=RESEARCH_TOPIC_DESC)
+    results_frames: list[str] = Field(..., description=REVIEW_RESULTS_DESC)
+    num_papers: int = Field(..., description=NUM_PAPERS_DESC)
+    model: str = Field(..., description=AI_MODEL_DESC)
+    session_id: str = Field(..., description=SESSION_ID_DESC)
     format_type: str = Field(default="markdown", description="Export format")
 
 
