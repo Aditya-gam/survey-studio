@@ -16,7 +16,7 @@ from survey_studio.api.errors import (
     http_exception_handler,
     survey_studio_error_handler,
 )
-from survey_studio.api.routers import health, info, models, providers, reviews, validate
+from survey_studio.api.routers import export, health, info, models, providers, reviews, validate
 from survey_studio.core.errors import SurveyStudioError
 
 
@@ -26,6 +26,7 @@ def create_app() -> FastAPI:
     Returns:
         FastAPI: Configured FastAPI application instance
     """
+    api_v1_prefix = "/api/v1"
     app = FastAPI(
         title="Survey Studio API",
         description="AI-powered survey analysis and review service",
@@ -56,8 +57,9 @@ def create_app() -> FastAPI:
     app.include_router(models.router, tags=["models"])
 
     # Include API v1 routers with prefix
-    app.include_router(validate.router, prefix="/api/v1", tags=["validation"])
-    app.include_router(reviews.router, prefix="/api/v1", tags=["reviews"])
+    app.include_router(validate.router, prefix=api_v1_prefix, tags=["validation"])
+    app.include_router(reviews.router, prefix=api_v1_prefix, tags=["reviews"])
+    app.include_router(export.router, prefix=api_v1_prefix, tags=["export"])
 
     return app
 
