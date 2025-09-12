@@ -3,7 +3,6 @@
 Handles loading of secrets from multiple sources in priority order:
 1. Environment variables (highest priority)
 2. .env file (loaded by dotenv)
-3. Streamlit secrets (for hosted deployment)
 """
 
 from enum import Enum
@@ -11,7 +10,6 @@ import os
 from typing import NamedTuple
 
 from dotenv import load_dotenv
-import streamlit as st
 
 # Load environment variables from .env file
 load_dotenv()
@@ -76,17 +74,15 @@ PROVIDER_CONFIGS = {
 }
 
 
-def _get_api_key(env_var: str, secret_key: str) -> str | None:
+def _get_api_key(env_var: str) -> str | None:
     """Get API key from multiple sources in priority order.
 
     Priority order:
     1. Environment variable
     2. .env file (loaded by dotenv)
-    3. Streamlit secrets (for hosted deployment)
 
     Args:
         env_var: Environment variable name
-        secret_key: Streamlit secret key name
 
     Returns:
         API key if found, None otherwise
@@ -96,37 +92,27 @@ def _get_api_key(env_var: str, secret_key: str) -> str | None:
     if api_key and api_key.strip():
         return api_key.strip()
 
-    # 2. Check Streamlit secrets (for hosted deployment)
-    try:
-        if hasattr(st, "secrets") and secret_key in st.secrets:
-            api_key = st.secrets[secret_key]
-            if api_key and api_key.strip():
-                return api_key.strip()
-    except Exception:
-        # Streamlit secrets might not be available in all contexts
-        pass
-
     return None
 
 
 def get_openai_api_key() -> str | None:
     """Get OpenAI API key from multiple sources in priority order."""
-    return _get_api_key("OPENAI_API_KEY", "OPENAI_API_KEY")
+    return _get_api_key("OPENAI_API_KEY")
 
 
 def get_together_ai_api_key() -> str | None:
     """Get Together AI API key from multiple sources in priority order."""
-    return _get_api_key("TOGETHER_AI_API_KEY", "TOGETHER_AI_API_KEY")
+    return _get_api_key("TOGETHER_AI_API_KEY")
 
 
 def get_gemini_api_key() -> str | None:
     """Get Gemini API key from multiple sources in priority order."""
-    return _get_api_key("GEMINI_API_KEY", "GEMINI_API_KEY")
+    return _get_api_key("GEMINI_API_KEY")
 
 
 def get_perplexity_api_key() -> str | None:
     """Get Perplexity API key from multiple sources in priority order."""
-    return _get_api_key("PERPLEXITY_API_KEY", "PERPLEXITY_API_KEY")
+    return _get_api_key("PERPLEXITY_API_KEY")
 
 
 def get_available_providers() -> list[ProviderConfig]:
@@ -202,15 +188,6 @@ def get_model_for_provider(provider: AIProvider) -> str:
     if model and model.strip():
         return model.strip()
 
-    # Check Streamlit secrets
-    try:
-        if hasattr(st, "secrets") and env_var in st.secrets:
-            model = st.secrets[env_var]
-            if model and model.strip():
-                return model.strip()
-    except Exception:
-        pass
-
     # Return default model for the provider
     return PROVIDER_CONFIGS[provider].model
 
@@ -237,17 +214,5 @@ def get_max_papers() -> int:
             return int(max_papers.strip())
         except ValueError:
             pass
-
-    # Check Streamlit secrets
-    try:
-        if hasattr(st, "secrets") and "MAX_PAPERS" in st.secrets:
-            max_papers = st.secrets["MAX_PAPERS"]
-            if max_papers:
-                try:
-                    return int(max_papers)
-                except ValueError:
-                    pass
-    except Exception:
-        pass
 
     return 5
