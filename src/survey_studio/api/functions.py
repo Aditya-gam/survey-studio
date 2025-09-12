@@ -89,7 +89,7 @@ def get_provider_status() -> dict[str, Any]:
     Returns:
         Dict containing provider availability and configuration info
     """
-    from survey_studio.domain.llm_factory import get_provider_info
+    from survey_studio.domain.llm_factory import get_provider_info  # noqa: PLC0415
 
     provider_info = get_provider_info()
 
@@ -275,7 +275,7 @@ def get_available_models() -> dict[str, list[str]]:
     Returns:
         Dict mapping provider names to lists of available models
     """
-    from survey_studio.core.config import get_available_providers
+    from survey_studio.core.config import get_available_providers  # noqa: PLC0415
 
     providers = get_available_providers()
     models: dict[str, list[str]] = {}

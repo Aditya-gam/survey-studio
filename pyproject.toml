@@ -45,8 +45,12 @@ dev = [
     "pyright==1.1.405",
 ]
 
-[project.scripts]
+[tool.poetry.scripts]
 survey-studio = "survey_studio.api:main"
+dev = "survey_studio.server:run_dev"
+start = "survey_studio.server:run_dev_no_reload"
+build = "survey_studio.server:build_prod"
+prod = "survey_studio.server:run_prod"
 
 [project.urls]
 Homepage = "https://github.com/Aditya-gam/survey-studio"
@@ -227,3 +231,7 @@ strictSetInference = true
 executionEnvironments = [
     { root = "src", pythonVersion = "3.12", pythonPlatform = "All" }
 ]
+
+# Use Poetry virtual environment
+venvPath = "."
+venv = ".venv"
