@@ -27,8 +27,8 @@ SENSITIVE_PATTERNS = [
         ),
         r"\1=***REDACTED***",
     ),
-    (re.compile(r"(?i)(bearer\s+)([a-zA-Z0-9_-]+)"), r"\1***REDACTED***"),
-    (re.compile(r"(?i)(sk-[a-zA-Z0-9]{32,})"), r"***REDACTED***"),
+    (re.compile(r"(?i)(bearer\s+)([a-z0-9_-]+)"), r"\1***REDACTED***"),
+    (re.compile(r"(?i)(sk-[a-z0-9]{32,})"), r"***REDACTED***"),
     (
         re.compile(r'(?i)(\w*key\w*"?\s*:\s*")[^"]+(")', re.IGNORECASE),
         r"\1***REDACTED***\2",
