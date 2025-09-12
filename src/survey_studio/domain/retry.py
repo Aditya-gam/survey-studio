@@ -55,6 +55,22 @@ _circuit_state: dict[str, dict[str, Any]] = defaultdict(
 )
 
 
+def _is_retryable_http_error(exc: BaseException) -> bool:
+    """Check if exception has a retryable HTTP status code (5xx)."""
+    if not hasattr(exc, "response"):
+        return False
+
+    response = getattr(exc, "response", None)
+    if response is None or not hasattr(response, "status_code"):
+        return False
+
+    status_code = getattr(response, "status_code", None)
+    if status_code is None or not isinstance(status_code, int):
+        return False
+
+    return HTTP_STATUS_SERVER_ERROR_MIN <= status_code < HTTP_STATUS_SERVER_ERROR_MAX
+
+
 def _should_retry_exception(exc: BaseException) -> bool:
     """Determine if an exception should trigger a retry."""
     # Don't retry validation or configuration errors
@@ -78,16 +94,7 @@ def _should_retry_exception(exc: BaseException) -> bool:
         return True
 
     # For HTTP errors, only retry 5xx status codes
-    if hasattr(exc, "response"):
-        response = getattr(exc, "response", None)
-        if response is not None and hasattr(response, "status_code"):
-            status_code = getattr(response, "status_code", None)
-            if status_code is not None and isinstance(status_code, int):
-                return bool(
-                    HTTP_STATUS_SERVER_ERROR_MIN <= status_code < HTTP_STATUS_SERVER_ERROR_MAX
-                )
-
-    return False
+    return _is_retryable_http_error(exc)
 
 
 def _update_circuit_breaker(service: str, success: bool) -> None:
