@@ -58,7 +58,7 @@ _circuit_state: dict[str, dict[str, Any]] = defaultdict(
 def _should_retry_exception(exc: BaseException) -> bool:
     """Determine if an exception should trigger a retry."""
     # Don't retry validation or configuration errors
-    from survey_studio.core.errors import ConfigurationError, ValidationError
+    from survey_studio.core.errors import ConfigurationError, ValidationError  # noqa: PLC0415
 
     if isinstance(exc, ValidationError | ConfigurationError):
         return False
@@ -161,7 +161,7 @@ def circuit_breaker(service: str) -> Callable[[F], F]:
     return decorator
 
 
-def retry_arxiv_operations(func: F) -> F:
+def retry_arxiv_operations[F: Callable[..., Any]](func: F) -> F:
     """Retry decorator for arXiv API operations.
 
     - 3 retries with exponential backoff (1s, 2s, 4s)
@@ -220,7 +220,7 @@ def retry_arxiv_operations(func: F) -> F:
     return cast("F", wrapper)
 
 
-def retry_llm_operations(func: F) -> F:
+def retry_llm_operations[F: Callable[..., Any]](func: F) -> F:
     """Retry decorator for LLM API operations.
 
     - 2 retries with exponential backoff (2s, 4s)
@@ -278,7 +278,7 @@ def retry_llm_operations(func: F) -> F:
     return cast("F", wrapper)
 
 
-def retry_export_operations(func: F) -> F:
+def retry_export_operations[F: Callable[..., Any]](func: F) -> F:
     """Retry decorator for export/file operations.
 
     - 2 retries with linear backoff (1s, 2s)

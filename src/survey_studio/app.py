@@ -29,7 +29,7 @@ __all__ = [
 
 def main() -> None:
     """Main entry point - redirects to API module."""
-    from .api import main as api_main
+    from .api import main as api_main  # noqa: PLC0415
 
     api_main()
 

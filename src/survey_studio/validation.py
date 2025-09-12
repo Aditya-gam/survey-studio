@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import datetime
 import os
+import re
 
 from survey_studio.core.errors import ValidationError
 
@@ -91,8 +93,6 @@ def clamp(value: int, min_value: int, max_value: int) -> int:
 
 def validate_topic_characters(topic: str) -> bool:
     """Validate that topic contains only sane characters."""
-    import re
-
     # Allow alphanumeric, spaces, common punctuation, and unicode letters
     # Reject characters that could cause injection issues
     pattern = r'^[\w\s.,!?\-:\;\(\)\[\]\'"]+$'
@@ -101,8 +101,6 @@ def validate_topic_characters(topic: str) -> bool:
 
 def validate_keywords(keywords_str: str) -> list[str]:
     """Validate and parse comma-separated keywords."""
-    import re
-
     if not keywords_str.strip():
         return []
 
@@ -129,8 +127,6 @@ def validate_keywords(keywords_str: str) -> list[str]:
 
 def validate_year_range(start_year: int, end_year: int) -> tuple[int, int]:
     """Validate year range for literature search."""
-    import datetime
-
     current_year = datetime.datetime.now().year
 
     if start_year < MIN_YEAR:
@@ -155,6 +151,4 @@ def validate_api_key_format(api_key: str) -> bool:
     key_body = api_key[3:]
 
     # Should be alphanumeric with possible underscores/hyphens
-    import re
-
     return bool(re.match(r"^[a-zA-Z0-9_-]{20,}$", key_body))

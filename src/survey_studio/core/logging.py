@@ -91,7 +91,7 @@ class KeyValueFormatter(logging.Formatter):
     """Format records as key=value pairs on a single line with security redaction."""
 
     def format(self, record: logging.LogRecord) -> str:  # noqa: D401 - docstring inherited
-        import time
+        import time  # noqa: PLC0415
 
         base: dict[str, Any] = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(record.created)),
@@ -162,7 +162,7 @@ def log_error_with_details(
     **additional_context: Any,
 ) -> None:
     """Log an error with structured details and security redaction."""
-    from .errors import get_error_details
+    from .errors import get_error_details  # noqa: PLC0415
 
     error_details = get_error_details(error)
 

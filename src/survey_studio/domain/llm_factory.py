@@ -239,8 +239,8 @@ def get_provider_info() -> dict[str, Any]:
     Returns:
         Dictionary with provider information including availability, limits, and usage stats
     """
-    from survey_studio.core.config import get_available_providers
-    from survey_studio.core.usage_monitor import get_usage_monitor
+    from survey_studio.core.config import get_available_providers  # noqa: PLC0415
+    from survey_studio.core.usage_monitor import get_usage_monitor  # noqa: PLC0415
 
     available_providers = get_available_providers()
     usage_monitor = get_usage_monitor()
