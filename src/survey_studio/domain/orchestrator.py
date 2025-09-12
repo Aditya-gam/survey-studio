@@ -10,10 +10,15 @@ from autogen_agentchat.messages import TextMessage
 if TYPE_CHECKING:  # TCH003: heavy typing imports behind TYPE_CHECKING
     from collections.abc import AsyncGenerator
 
-from .agents import build_team
-from .errors import OrchestrationError
-from .logging import configure_logging, new_session_id, set_session_id, with_context
-from .validation import (
+from survey_studio.core.errors import OrchestrationError
+from survey_studio.core.logging import (
+    configure_logging,
+    new_session_id,
+    set_session_id,
+    with_context,
+)
+from survey_studio.domain.agents import build_team
+from survey_studio.validation import (
     validate_model,
     validate_num_papers,
     validate_topic,

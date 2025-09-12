@@ -23,14 +23,14 @@ from tenacity import (
     wait_fixed,
 )
 
-from .errors import (
+from survey_studio.core.errors import (
     ConfigurationError,
     ExportError,
     ExternalServiceError,
     LLMError,
     ValidationError,
 )
-from .logging import with_context
+from survey_studio.core.logging import with_context
 
 logger = logging.getLogger(__name__)
 # Prevent test-time mocked root handlers from interfering with library logs
@@ -58,7 +58,7 @@ _circuit_state: dict[str, dict[str, Any]] = defaultdict(
 def _should_retry_exception(exc: BaseException) -> bool:
     """Determine if an exception should trigger a retry."""
     # Don't retry validation or configuration errors
-    from .errors import ConfigurationError, ValidationError
+    from survey_studio.core.errors import ConfigurationError, ValidationError
 
     if isinstance(exc, ValidationError | ConfigurationError):
         return False

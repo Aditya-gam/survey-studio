@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from .config import AIProvider
+from survey_studio.core.config import AIProvider
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

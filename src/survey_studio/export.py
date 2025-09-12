@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 
 from markdown_it import MarkdownIt
 
-from .errors import ExportError, ValidationError
-from .retry import retry_export_operations
+from survey_studio.core.errors import ExportError, ValidationError
+from survey_studio.domain.retry import retry_export_operations
 
 # Constants
 MAX_FILENAME_LENGTH = 100

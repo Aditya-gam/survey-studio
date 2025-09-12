@@ -8,9 +8,9 @@ from typing import Any
 import arxiv  # type: ignore
 from autogen_core.tools import FunctionTool
 
-from .errors import ArxivSearchError, ExternalServiceError
-from .logging import log_error_with_details, with_context
-from .retry import retry_arxiv_operations
+from survey_studio.core.errors import ArxivSearchError, ExternalServiceError
+from survey_studio.core.logging import log_error_with_details, with_context
+from survey_studio.domain.retry import retry_arxiv_operations
 
 logger = logging.getLogger(__name__)
 # Isolate this module's logger to avoid MagicMock level comparisons during tests

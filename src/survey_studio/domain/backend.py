@@ -6,6 +6,6 @@ code should import from `survey_studio.orchestrator` instead.
 
 from __future__ import annotations
 
-from .orchestrator import run_survey_studio  # re-export
+from survey_studio.domain.orchestrator import run_survey_studio  # re-export
 
 __all__ = ["run_survey_studio"]

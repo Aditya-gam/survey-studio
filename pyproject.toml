@@ -1,13 +1,13 @@
 [project]
 name = "survey-studio"
 version = "0.1.0"
-description = "A multi-agent literature review assistant using AutoGen and Streamlit"
+description = "A multi-agent literature review assistant using AutoGen"
 authors = [
     {name = "Aditya Gambhir", email = "gambhir.aditya19@gmail.com"}
 ]
 readme = "README.md"
 license = {text = "MIT"}
-keywords = ["literature-review", "autogen", "streamlit", "arxiv", "research"]
+keywords = ["literature-review", "autogen", "arxiv", "research", "api", "rest"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -19,7 +19,6 @@ classifiers = [
 ]
 requires-python = ">=3.12.11"
 dependencies = [
-    "streamlit>=1.38.0",
     "arxiv>=2.1.0",
     "autogen-core>=0.4.1",
     "autogen-agentchat>=0.4.1",
@@ -32,7 +31,10 @@ dependencies = [
     "google-generativeai (>=0.8.5,<0.9.0)",
     "perplexity (>=0.0.1,<0.0.2)",
     "watchdog (>=6.0.0,<7.0.0)",
-    "streamlit-elements (>=0.1.0,<0.2.0)",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "python-multipart>=0.0.6",
 ]
 
 [project.optional-dependencies]
@@ -44,7 +46,7 @@ dev = [
 ]
 
 [project.scripts]
-survey-studio = "survey_studio.app:main"
+survey-studio = "survey_studio.api:main"
 
 [project.urls]
 Homepage = "https://github.com/Aditya-gam/survey-studio"

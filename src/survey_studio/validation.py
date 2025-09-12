@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from .errors import ValidationError
+from survey_studio.core.errors import ValidationError
 
 ALLOWED_MODELS: tuple[str, ...] = ("gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo")
 MAX_TOPIC_LENGTH: int = 200

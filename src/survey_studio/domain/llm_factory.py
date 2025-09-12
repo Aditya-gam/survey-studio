@@ -8,12 +8,16 @@ from typing import TYPE_CHECKING, Any
 from autogen_core.models._model_client import ModelInfo
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-from .config import AIProvider, get_available_providers, get_best_available_provider
-from .errors import AgentCreationError, ConfigurationError
-from .logging import log_error_with_details, with_context
+from survey_studio.core.config import (
+    AIProvider,
+    get_available_providers,
+    get_best_available_provider,
+)
+from survey_studio.core.errors import AgentCreationError, ConfigurationError
+from survey_studio.core.logging import log_error_with_details, with_context
 
 if TYPE_CHECKING:
-    from .config import ProviderConfig
+    from survey_studio.core.config import ProviderConfig
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -235,8 +239,8 @@ def get_provider_info() -> dict[str, Any]:
     Returns:
         Dictionary with provider information including availability, limits, and usage stats
     """
-    from .config import get_available_providers
-    from .usage_monitor import get_usage_monitor
+    from survey_studio.core.config import get_available_providers
+    from survey_studio.core.usage_monitor import get_usage_monitor
 
     available_providers = get_available_providers()
     usage_monitor = get_usage_monitor()

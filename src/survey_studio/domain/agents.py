@@ -7,12 +7,16 @@ import logging
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.teams import RoundRobinGroupChat
 
-from .config import get_best_available_provider
-from .errors import AgentCreationError, ConfigurationError, LLMError
-from .llm_factory import create_llm_client, create_llm_client_with_fallback, get_provider_info
-from .logging import log_error_with_details, with_context
-from .retry import retry_llm_operations
-from .tools import arxiv_tool
+from survey_studio.core.config import get_best_available_provider
+from survey_studio.core.errors import AgentCreationError, ConfigurationError, LLMError
+from survey_studio.core.logging import log_error_with_details, with_context
+from survey_studio.domain.llm_factory import (
+    create_llm_client,
+    create_llm_client_with_fallback,
+    get_provider_info,
+)
+from survey_studio.domain.retry import retry_llm_operations
+from survey_studio.domain.tools import arxiv_tool
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
