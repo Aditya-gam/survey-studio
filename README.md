@@ -98,100 +98,198 @@ flowchart TD
    export OPENAI_API_KEY="your-openai-api-key-here"
    ```
 
-## 📖 API Functions
+## 🌐 REST API
 
-The core functionality is provided through clean, reusable functions in `survey_studio.api`:
+Survey Studio provides a comprehensive REST API that enables developers to integrate literature review capabilities into their applications. The API follows modern REST principles and includes complete OpenAPI/Swagger documentation.
 
-### Core Functions
+### Quick Start Workflow
 
-- **`initialize_session()`** - Initialize a new review session
-- **`get_provider_status()`** - Get AI provider configuration status
-- **`validate_review_request(topic, num_papers, model)`** - Validate review parameters
-- **`run_literature_review(topic, num_papers, model, session_id)`** - Run async literature review
-- **`run_review_with_fallback(topic, num_papers, model, session_id)`** - Run sync literature review
-- **`generate_export(request)`** - Generate exports using ExportRequestRequired dict
-- **`get_available_models()`** - Get available AI models by provider
-- **`get_health_status()`** - Get service health status
+Follow this complete workflow to get started with the Survey Studio API:
 
-### Example Usage
+#### 1. Start the Development Server
 
-```python
-from survey_studio.api import (
-    initialize_session,
-    validate_review_request,
-    run_review_with_fallback,
-    generate_export
-)
-
-# Initialize session
-session_id = initialize_session()
-
-# Validate request
-validation = validate_review_request(
-    topic="transformer architectures",
-    num_papers=5,
-    model="auto"
-)
-
-if validation["valid"]:
-    # Run literature review
-    results = run_review_with_fallback(
-        topic="transformer architectures",
-        num_papers=5,
-        model="auto",
-        session_id=session_id
-    )
-
-    # Generate export
-    export = generate_export({
-        "topic": "transformer architectures",
-        "results_frames": results["results"],
-        "num_papers": 5,
-        "model": "auto",
-        "session_id": session_id,
-        "format_type": "markdown"
-    })
-
-    print(f"Review completed: {export['filename']}")
+```bash
+poetry run dev
 ```
 
-### Building REST Endpoints
+The server will start on `localhost:8000` with hot reload enabled for development.
 
-Use these functions to build your own REST API endpoints:
+#### 2. Verify Server Health
 
-```python
-from fastapi import FastAPI, HTTPException
-from survey_studio.api import (
-    initialize_session,
-    validate_review_request,
-    run_review_with_fallback,
-    get_health_status
-)
+Check that everything is working correctly:
 
-app = FastAPI()
-
-@app.get("/health")
-async def health_check():
-    return get_health_status()
-
-@app.post("/review")
-async def create_review(request: ReviewRequest):
-    # Validate request
-    validation = validate_review_request(
-        request.topic, request.num_papers, request.model
-    )
-
-    if not validation["valid"]:
-        raise HTTPException(status_code=400, detail=validation["error"])
-
-    # Run review
-    session_id = initialize_session()
-    results = run_review_with_fallback(
-        request.topic, request.num_papers, request.model, session_id
-    )
-
-    return results
+```bash
+curl -X GET "localhost:8000/health"
 ```
+
+**Expected Response:**
+```json
+{
+  "status": "healthy",
+  "providers": {
+    "available_count": 1,
+    "best_provider": "together-ai",
+    "providers": [
+      {
+        "name": "together-ai",
+        "model": "meta-llama/Llama-3.1-70B-Instruct-Turbo",
+        "priority": 1,
+        "free_tier_rpm": 30,
+        "free_tier_tpm": 200000
+      }
+    ]
+  },
+  "timestamp": "2025-01-20T10:30:45.123456",
+  "version": "0.1.0"
+}
+```
+
+#### 3. (Optional) Validate Review Parameters
+
+Before running a full review, you can validate your parameters:
+
+```bash
+curl -X POST "localhost:8000/api/v1/validate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "retrieval augmented generation",
+    "num_papers": 5,
+    "model": "auto"
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "status": "completed",
+  "results": {
+    "valid": true,
+    "message": "Parameters are valid",
+    "topic": "retrieval augmented generation",
+    "num_papers": 5,
+    "model": "auto"
+  }
+}
+```
+
+#### 4. Run Literature Review
+
+Execute a complete literature review:
+
+```bash
+curl -X POST "localhost:8000/api/v1/reviews" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "retrieval augmented generation",
+    "num_papers": 5,
+    "model": "auto"
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "status": "completed",
+  "results": [
+    "# Literature Review: Retrieval Augmented Generation\n\n## Overview\nRetrieval-Augmented Generation (RAG) represents a significant advancement...",
+    "## Key Findings\n1. RAG systems demonstrate superior performance in knowledge-intensive tasks...",
+    "## Paper Analysis\n### Paper 1: 'Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks'\n- **Authors**: Lewis et al.\n- **Summary**: This foundational work introduces..."
+  ]
+}
+```
+
+#### 5. Export Results
+
+Generate formatted exports of your review results:
+
+```bash
+curl -X POST "localhost:8000/api/v1/export" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "retrieval augmented generation",
+    "results_frames": [
+      "# Literature Review: Retrieval Augmented Generation...",
+      "## Key Findings...",
+      "## Paper Analysis..."
+    ],
+    "num_papers": 5,
+    "model": "auto",
+    "session_id": "session_12345",
+    "format_type": "markdown"
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "content": "# Survey Studio Literature Review\n\n**Topic**: Retrieval Augmented Generation...",
+  "filename": "literature_review_retrieval_augmented_generation_20250120_103045.md",
+  "mime_type": "text/markdown",
+  "format": "markdown",
+  "metadata": {
+    "topic": "retrieval augmented generation",
+    "num_papers": 5,
+    "model": "auto",
+    "session_id": "session_12345",
+    "generated_at": "2025-01-20T10:30:45.123456"
+  }
+}
+```
+
+### API Endpoints Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Service health check with provider status |
+| `GET` | `/` | Basic service information |
+| `GET` | `/providers` | Detailed AI provider configuration |
+| `GET` | `/models` | Available AI models by provider |
+| `POST` | `/api/v1/validate` | Validate review parameters (optional) |
+| `POST` | `/api/v1/reviews` | Execute literature review |
+| `POST` | `/api/v1/export` | Export review results to various formats |
+
+### Request/Response Schemas
+
+#### Review Request
+```json
+{
+  "topic": "string (1-500 characters)",
+  "num_papers": "integer (1-50)",
+  "model": "string ('auto' for automatic selection)"
+}
+```
+
+#### Export Request
+```json
+{
+  "topic": "string",
+  "results_frames": ["array of strings"],
+  "num_papers": "integer",
+  "model": "string",
+  "session_id": "string",
+  "format_type": "string ('markdown' or 'html', default: 'markdown')"
+}
+```
+
+### Complete API Documentation
+
+For detailed API specifications, request/response schemas, and interactive testing:
+
+**Visit: http://localhost:8000/docs** (when server is running)
+
+This provides the full OpenAPI/Swagger documentation with:
+- Complete endpoint specifications
+- Request/response examples
+- Interactive API testing interface
+- Model schemas and validation rules
+
+### Quick Verification
+
+To confirm everything is working after setup:
+
+1. **Server Started Successfully**: Look for `INFO: Uvicorn running on http://0.0.0.0:8000`
+2. **Health Check Passes**: `curl localhost:8000/health` returns `"status": "healthy"`
+3. **API Documentation Accessible**: Visit `http://localhost:8000/docs` in your browser
 
 ## 🔧 Configuration
 
