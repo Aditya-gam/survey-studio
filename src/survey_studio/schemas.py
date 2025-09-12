@@ -70,6 +70,20 @@ class ModelsResponse(BaseModel):
     models: dict[str, list[str]] = Field(..., description="Available models grouped by provider")
 
 
+class ValidateResponse(BaseModel):
+    """Response model for successful validation."""
+
+    status: str = Field(..., description="Validation status")
+    results: dict[str, Any] = Field(..., description="Validation results")
+
+
+class ReviewResponse(BaseModel):
+    """Response model for successful review."""
+
+    status: str = Field(..., description="Review status")
+    results: list[str] = Field(..., description="Review result frames")
+
+
 # Additional models for future endpoints
 
 
@@ -123,6 +137,14 @@ class ReviewResults(BaseModel):
 
 class ReviewRequest(BaseModel):
     """Request model for literature review."""
+
+    topic: str = Field(..., min_length=1, max_length=500, description="Research topic")
+    num_papers: int = Field(..., ge=1, le=50, description="Number of papers to review")
+    model: str = Field(..., description="AI model to use or 'auto' for automatic selection")
+
+
+class ReviewValidateRequest(BaseModel):
+    """Request model for review validation."""
 
     topic: str = Field(..., min_length=1, max_length=500, description="Research topic")
     num_papers: int = Field(..., ge=1, le=50, description="Number of papers to review")
