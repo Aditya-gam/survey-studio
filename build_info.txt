@@ -1,0 +1,3 @@
+build_time: Fri Sep 12 00:04:03 PDT 2025
+python_version: 3.12.11 (main, Jun  3 2025, 15:41:47) [Clang 17.0.0 (clang-1700.0.13.3)]
+poetry_version: Poetry (version 2.1.3)
