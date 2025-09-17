@@ -23,11 +23,12 @@ router = APIRouter()
 async def validate_review(request: ReviewValidateRequest) -> ValidateResponse:
     """Validate a literature review request.
 
-    Validates the topic, number of papers, and model parameters to ensure
-    they meet the requirements for processing a literature review.
+    Validates the topic and number of papers to ensure they meet the requirements
+    for processing a literature review. The system automatically selects the best
+    available AI provider using the fallback order: TogetherAI → Gemini → Perplexity → OpenAI
 
     Args:
-        request: Review validation request containing topic, num_papers, and model
+        request: Review validation request containing topic and num_papers
 
     Returns:
         ValidateResponse: Validation status and results
@@ -37,7 +38,7 @@ async def validate_review(request: ReviewValidateRequest) -> ValidateResponse:
         ConfigurationError: If no AI providers are configured (handled as 503)
     """
     validation_result = ValidationService.validate_request(
-        topic=request.topic, num_papers=request.num_papers, model=request.model
+        topic=request.topic, num_papers=request.num_papers
     )
 
     return ValidateResponse(status="completed", results=cast(dict[str, Any], validation_result))

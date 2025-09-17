@@ -22,10 +22,12 @@ async def run_review(request: ReviewValidateRequest) -> ReviewResponse:
     """Run a literature review.
 
     Initializes a new session and runs a complete literature review process
-    for the specified topic, number of papers, and AI model.
+    for the specified topic and number of papers. The system automatically
+    selects the best available AI provider using the fallback order:
+    TogetherAI → Gemini → Perplexity → OpenAI
 
     Args:
-        request: Review request containing topic, num_papers, and model
+        request: Review request containing topic and num_papers
 
     Returns:
         ReviewResponse: Review status and results
@@ -40,11 +42,10 @@ async def run_review(request: ReviewValidateRequest) -> ReviewResponse:
     # Initialize a new session
     session_id = ReviewService.initialize_new_session()
 
-    # Run the review
+    # Run the review with automatic provider selection
     review_result = ReviewService.run_review(
         topic=request.topic,
         num_papers=request.num_papers,
-        model=request.model,
         session_id=session_id,
     )
 

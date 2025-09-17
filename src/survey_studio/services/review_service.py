@@ -32,15 +32,14 @@ class ReviewService:
         return initialize_session()
 
     @staticmethod
-    def run_review(
-        topic: str, num_papers: int, model: str, session_id: str | None = None
-    ) -> "ReviewResults":
-        """Run a literature review with fallback handling.
+    def run_review(topic: str, num_papers: int, session_id: str | None = None) -> "ReviewResults":
+        """Run a literature review with automatic provider fallback.
+
+        Uses the hardcoded fallback system: TogetherAI → Gemini → Perplexity → OpenAI
 
         Args:
             topic: Research topic to review
             num_papers: Number of papers to review
-            model: AI model to use for the review
             session_id: Optional session ID for tracking (will create new if None)
 
         Returns:
@@ -53,4 +52,4 @@ class ReviewService:
             LLMError: If AI model fails
             SurveyStudioError: If review process fails
         """
-        return run_review_with_fallback(topic, num_papers, model, session_id)
+        return run_review_with_fallback(topic, num_papers, session_id)
