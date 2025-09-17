@@ -8,7 +8,7 @@ import re
 
 from survey_studio.core.errors import ValidationError
 
-ALLOWED_MODELS: tuple[str, ...] = ("gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo")
+# Removed ALLOWED_MODELS as we now use automatic provider fallback
 MAX_TOPIC_LENGTH: int = 200
 MIN_TOPIC_LENGTH: int = 3
 MAX_NUM_PAPERS: int = 10
@@ -40,10 +40,9 @@ def validate_num_papers(num_papers: int) -> int:
     return num_papers
 
 
-def validate_model(model: str) -> str:
-    if model not in ALLOWED_MODELS:
-        raise ValidationError(f"model must be one of: {', '.join(ALLOWED_MODELS)}")
-    return model
+# Removed validate_model function as we now use automatic provider fallback
+# The system will automatically select the best available provider in this order:
+# TogetherAI → Gemini → Perplexity → OpenAI
 
 
 def validate_openai_key(env_var: str = "OPENAI_API_KEY") -> str:

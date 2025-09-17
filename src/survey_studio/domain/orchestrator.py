@@ -19,7 +19,6 @@ from survey_studio.core.logging import (
 )
 from survey_studio.domain.agents import build_team
 from survey_studio.validation import (
-    validate_model,
     validate_num_papers,
     validate_topic,
 )
@@ -30,7 +29,6 @@ logger = logging.getLogger(__name__)
 async def run_survey_studio(
     topic: str,
     num_papers: int = 5,
-    model: str | None = None,
     *,
     session_id: str | None = None,
 ) -> AsyncGenerator[str, None]:
@@ -51,8 +49,9 @@ async def run_survey_studio(
     try:
         clean_topic = validate_topic(topic)
         clean_n = validate_num_papers(num_papers)
-        # Handle "auto" model selection - don't validate it, just pass None to use best available
-        clean_model = validate_model(model) if model and model != "auto" else None
+        # Model selection is now handled automatically by the LLM factory
+        # Pass None to let the system choose the best available provider
+        clean_model = None
 
         team = build_team(model=clean_model)
         task_prompt = (

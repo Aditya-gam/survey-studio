@@ -22,7 +22,7 @@ from survey_studio.export import (
     to_html,
     to_markdown,
 )
-from survey_studio.validation import validate_model, validate_num_papers, validate_topic
+from survey_studio.validation import validate_num_papers, validate_topic
 
 if TYPE_CHECKING:
     from typing import TypedDict
@@ -109,13 +109,12 @@ def get_provider_status() -> dict[str, Any]:
     }
 
 
-def validate_review_request(topic: str, num_papers: int, model: str) -> "ValidationResult":
+def validate_review_request(topic: str, num_papers: int) -> "ValidationResult":
     """Validate a literature review request.
 
     Args:
         topic: Research topic
         num_papers: Number of papers to review
-        model: AI model to use
 
     Returns:
         Dict containing validation result and any error messages
@@ -124,16 +123,23 @@ def validate_review_request(topic: str, num_papers: int, model: str) -> "Validat
         ValidationError: If validation fails
         ConfigurationError: If no AI providers are configured
     """
+    from survey_studio.core.config import get_best_available_provider  # noqa: PLC0415
+
     try:
         validate_topic(topic)
         validate_num_papers(num_papers)
-        validate_model(model)
+
+        # Validate that we have at least one provider available
+        best_provider = get_best_available_provider()
+        if not best_provider:
+            raise ConfigurationError("No AI providers are configured")
+
         return {
             "valid": True,
             "message": "Request is valid",
             "topic": topic,
             "num_papers": num_papers,
-            "model": model,
+            "model": best_provider.model,
         }
     except (ValidationError, ConfigurationError) as e:
         return {
@@ -142,19 +148,20 @@ def validate_review_request(topic: str, num_papers: int, model: str) -> "Validat
             "error_type": e.__class__.__name__,
             "topic": topic,
             "num_papers": num_papers,
-            "model": model,
+            "model": "auto",
         }
 
 
 async def run_literature_review(
-    topic: str, num_papers: int, model: str, session_id: str | None = None
+    topic: str, num_papers: int, session_id: str | None = None
 ) -> "ReviewResults":
     """Run a literature review and return results.
+
+    Uses the hardcoded fallback system: TogetherAI → Gemini → Perplexity → OpenAI
 
     Args:
         topic: Research topic
         num_papers: Number of papers to review
-        model: AI model to use (or "auto" for automatic selection)
         session_id: Optional session ID for tracking
 
     Returns:
@@ -167,18 +174,25 @@ async def run_literature_review(
         LLMError: If AI model fails
         SurveyStudioError: If review process fails
     """
+    from survey_studio.core.config import get_best_available_provider  # noqa: PLC0415
+
     if not session_id:
         session_id = initialize_session()
 
-    # Convert "auto" to None for the orchestrator
-    model_for_orchestrator = None if model == "auto" else model
+    # Get the best available provider (will use fallback automatically)
+    best_provider = get_best_available_provider()
+    if not best_provider:
+        raise ConfigurationError("No AI providers are configured")
 
-    # Run the review and collect results
+    model_used = best_provider.model
+
+    # Run the review and collect results (orchestrator handles fallback internally)
     results_frames: list[str] = []
     current_phase = None
 
     async for frame in run_survey_studio(
-        topic, num_papers=num_papers, model=model_for_orchestrator
+        topic,
+        num_papers=num_papers,
     ):
         role, *_ = frame.split(":", 1)
 
@@ -199,7 +213,7 @@ async def run_literature_review(
         "session_id": session_id,
         "topic": topic,
         "num_papers": num_papers,
-        "model": model,
+        "model": model_used,
         "status": "completed",
         "results": results_frames,
         "total_frames": len(results_frames),
@@ -314,28 +328,28 @@ def get_health_status() -> "HealthStatus":
 
 
 def run_review_with_fallback(
-    topic: str, num_papers: int, model: str, session_id: str | None = None
+    topic: str, num_papers: int, session_id: str | None = None
 ) -> "ReviewResults":
     """Run literature review with asyncio fallback handling.
 
     This is a synchronous wrapper around the async run_literature_review function.
+    Uses the hardcoded fallback system: TogetherAI → Gemini → Perplexity → OpenAI
 
     Args:
         topic: Research topic
         num_papers: Number of papers to review
-        model: AI model to use
         session_id: Optional session ID
 
     Returns:
         Dict containing review results
     """
     try:
-        return asyncio.run(run_literature_review(topic, num_papers, model, session_id))
+        return asyncio.run(run_literature_review(topic, num_papers, session_id))
     except RuntimeError:
         # Fallback for when an event loop is already running
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        return loop.run_until_complete(run_literature_review(topic, num_papers, model, session_id))
+        return loop.run_until_complete(run_literature_review(topic, num_papers, session_id))
 
 
 def main() -> None:
@@ -347,12 +361,13 @@ def main() -> None:
     print("Available functions:")
     print("- initialize_session()")
     print("- get_provider_status()")
-    print("- validate_review_request(topic, num_papers, model)")
-    print("- run_literature_review(topic, num_papers, model, session_id)")
-    print("- run_review_with_fallback(topic, num_papers, model, session_id)")
+    print("- validate_review_request(topic, num_papers)")
+    print("- run_literature_review(topic, num_papers, session_id)")
+    print("- run_review_with_fallback(topic, num_papers, session_id)")
     print("- generate_export(request: ExportRequestRequired)")
     print("- get_available_models()")
     print("- get_health_status()")
+    print("\nProvider fallback order: TogetherAI → Gemini → Perplexity → OpenAI")
 
 
 if __name__ == "__main__":

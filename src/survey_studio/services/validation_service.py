@@ -20,13 +20,12 @@ class ValidationService:
     """
 
     @staticmethod
-    def validate_request(topic: str, num_papers: int, model: str) -> "ValidationResult":
+    def validate_request(topic: str, num_papers: int) -> "ValidationResult":
         """Validate a literature review request.
 
         Args:
             topic: Research topic to validate
             num_papers: Number of papers to review
-            model: AI model to use for the review
 
         Returns:
             ValidationResult: Dict containing validation status and details
@@ -35,4 +34,4 @@ class ValidationService:
             ValidationError: If the request parameters are invalid
             ConfigurationError: If no AI providers are configured
         """
-        return validate_review_request(topic, num_papers, model)
+        return validate_review_request(topic, num_papers)
