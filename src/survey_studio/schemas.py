@@ -141,7 +141,6 @@ class ReviewRequest(BaseModel):
 
     topic: str = Field(..., min_length=1, max_length=500, description=RESEARCH_TOPIC_DESC)
     num_papers: int = Field(..., ge=1, le=50, description="Number of papers to review")
-    model: str = Field(..., description="AI model to use or 'auto' for automatic selection")
 
 
 class ReviewValidateRequest(BaseModel):
@@ -149,7 +148,6 @@ class ReviewValidateRequest(BaseModel):
 
     topic: str = Field(..., min_length=1, max_length=500, description=RESEARCH_TOPIC_DESC)
     num_papers: int = Field(..., ge=1, le=50, description="Number of papers to review")
-    model: str = Field(..., description="AI model to use or 'auto' for automatic selection")
 
 
 class ExportRequest(BaseModel):
